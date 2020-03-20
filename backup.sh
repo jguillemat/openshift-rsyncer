@@ -32,7 +32,7 @@ get_pod_name(){
         p_name=$(oc get po --namespace=$p_project --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
     fi
     
-    return "${p_name}"	  
+    echo "${p_name}"	  
 }
 
 # --------------------------------------
