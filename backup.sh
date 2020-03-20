@@ -23,15 +23,11 @@ get_pod_name(){
     local p_selector="${1}"
     local p_project="${2}"
     local p_name=""
-
     if [[ "${p_project}" == "" ]]; then
-        echo "Finding pod with selector ${p_selector} ..."
         p_name=$(oc get po --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
     else
-        echo "Finding pod th selector ${p_selector} into project ${p_project} ..."
         p_name=$(oc get po --namespace=$p_project --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
     fi
-    
     echo "${p_name}"	  
 }
 
@@ -89,6 +85,7 @@ main () {
         echo "Start OC RSYNC from POD ${pod_name} of project ${project} into ${replica_dir}..."
         # oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} --progress --namespace=${project}
     fi
+    sleep 60;
     echo "End OC RSYNC."
 }
 
