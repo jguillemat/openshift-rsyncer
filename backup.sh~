@@ -21,15 +21,14 @@ is_empty() {
 
 get_pod_name(){
 	
-    local selector="${1}"
-    local project="${2}"
+    local p_selector="${1}"
+    local p_project="${2}"
+    local p_name=""
 
-    local pod_name=""
-
-    if [[ -z "${project}" ]]; then
-        pod_name=$(oc get po --namespace=$project --selector=$selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
+    if [[ ! "${p_project}" == "" ]]; then
+        pod_name=$(oc get po --namespace=$p_project --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
     else
-        pod_name=$(oc get po --selector=$selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
+        pod_name=$(oc get po --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
     fi
     echo "${pod_name}"	  
 }
@@ -70,7 +69,7 @@ main () {
         fi        
         
         pod_name="$( get_pod_name ${selector} ${project} )"
-        echo "Found POd Name ${pod_name} ...."
+        echo "Found Pod Name ${pod_name} ...."
         if [[ "${pod_name}" == "" ]]; then
             echo "ERROR: CANNOT GET POD_NAME. Exit."
             exit "${E_NOPODNAME}"
@@ -82,10 +81,10 @@ main () {
     replica_dir="${replica_volume_path}/"
 
     if [[ "${project}" == "" ]]; then
-        echo "Start OC RSYNC from POD ${pod_name} into {replica_dir} ..."
+        echo "Start OC RSYNC from POD ${pod_name} into ${replica_dir} ..."
         # oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} --progress 
     else 
-        echo "Start OC RSYNC from POD ${pod_name} of project ${project} into {replica_dir}..."
+        echo "Start OC RSYNC from POD ${pod_name} of project ${project} into ${replica_dir}..."
         # oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} --progress --namespace=${project}
     fi
     echo "End OC RSYNC."
