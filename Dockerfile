@@ -1,4 +1,4 @@
-FROM openshift3/ose-cli:v3.11
+FROM ose-cli:v3.11
 MAINTAINER openshift@essiprojects.com
 
 ENV IMAGE_SCRIPTS_HOME /opt/pvc-backup
