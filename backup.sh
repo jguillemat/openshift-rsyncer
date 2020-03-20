@@ -25,14 +25,14 @@ get_pod_name(){
     local p_project="${2}"
     local p_name=""
 
-    if [[ ! "${p_project}" == "" ]]; then
-        echo "Finding pod th selector ${p_selector} into project ${p_project} ..."
-        pod_name=$(oc get po --namespace=$p_project --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
-    else
+    if [[ "${p_project}" == "" ]]; then
         echo "Finding pod with selector ${p_selector} ..."
-        pod_name=$(oc get po --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
+        p_name=$(oc get po --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
+    else
+        echo "Finding pod th selector ${p_selector} into project ${p_project} ..."
+        p_name=$(oc get po --namespace=$p_project --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
     fi
-    return "${pod_name}"	  
+    return "${p_name}"	  
 }
 
 # --------------------------------------
