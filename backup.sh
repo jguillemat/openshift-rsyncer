@@ -20,7 +20,6 @@ is_empty() {
 }
 
 get_pod_name(){
-	
     local p_selector="${1}"
     local p_project="${2}"
     local p_name=""
@@ -32,6 +31,7 @@ get_pod_name(){
         echo "Finding pod th selector ${p_selector} into project ${p_project} ..."
         p_name=$(oc get po --namespace=$p_project --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
     fi
+    
     return "${p_name}"	  
 }
 
