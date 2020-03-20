@@ -42,7 +42,7 @@ main () {
     local -r src="/source"
     local -r dst="/backup"
 
-    local -r pod_name="${POD_NAME}"
+    local pod_name="${POD_NAME}"
     local -r pod_volume_path="${POD_VOLUME_PATH}"
     local -r project="${POD_PROJECT}"
     
