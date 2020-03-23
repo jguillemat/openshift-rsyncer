@@ -11,7 +11,7 @@
 #   POD_VOLUME_PATH       (required) path inside pod to backup data.
 #   REPLICA_VOLUME_PATH   (optional) path of backup PVC/PV to store data. Defaults: "//data-replica"
 #   OC_RSYNC_OPTIONS      (optional) Parameters to pass to "oc rsync" . Defaults "--progress"
-#   NATIVE_RSYNC_OPTIONS  (optional) Native parameters to pass to "rsync" . Defaults "-avpz --executability --acls --owner --group --times --specials"
+#   NATIVE_RSYNC_OPTIONS  (optional) Native parameters to pass to "rsync" . Defaults "-avpz --executability --acls --owner --group --times --specials --progress"
 
 # EXIT ERRORS
 readonly E_NOPODSELECTOR=254      # CANNOT GET POD SELECTOR
@@ -131,15 +131,15 @@ main () {
             log_msg "Start OC RSYNC from DIR ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${oc_options} ..."
             oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options} 
         else
-            log_msg "Start OC RSYNC from DIR ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${oc_options} ..."
+            log_msg "Start OC RSYNC from DIR ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options '${rsync_options}' ..."
             rsync ${rsync_options} ${pod_name}:${source_dir} ${replica_dir}
         fi 
     else 
         if [[ "${rsync_options}" == "" ]]; then
-            log_msg "Start OC RSYNC from DIR ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options ${oc_options} ..."
+            log_msg "Start OC RSYNC from DIR ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options '${oc_options}' ..."
             oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options} --namespace=${project}
         else
-            log_msg "Start OC RSYNC from DIR ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with rsync options ${rsync_options} ..."
+            log_msg "Start OC RSYNC from DIR ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with rsync options '${rsync_options}' ..."
             export RSYNC_RSH="oc rsh --namespace=${project}"
             rsync ${rsync_options} ${pod_name}:${source_dir} ${replica_dir}
         fi 
