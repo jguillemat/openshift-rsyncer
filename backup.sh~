@@ -10,7 +10,7 @@
 #   POD_NAME              (optional) name of pod to connect for get data.
 #   POD_VOLUME_PATH       (required) path inside pod to backup data.
 #   REPLICA_VOLUME_PATH   (optional) path of backup PVC/PV to store data. Defaults: "//data-replica"
-#   OC_RSYNC_OPTIONS      (optional) Parameters to pass to "oc rsync" . Defaults "--delete --watch"
+#   OC_RSYNC_OPTIONS      (optional) Parameters to pass to "oc rsync" . Defaults "--progress"
 
 
 # EXIT ERRORS
@@ -18,6 +18,10 @@ readonly E_NOPODSELECTOR=254      # CANNOT GET POD SELECTOR
 readonly E_NOPODNAME=253          # CANNOT GET POD NAME
 readonly E_NOVOLUME=252           # POD_VOLUME not specified
 readonly E_NOERROR=0              # ALL IT'S OK
+
+# Configure rync into PATH
+
+PATH=$PATH:
 
 # --------------------------------------
 # FUNCTIONS
@@ -101,18 +105,18 @@ main () {
     
     log_msg "Checking OC OPTIONS ${oc_options}... "
     if [[ "${oc_options}" == "" ]]; then
-        oc_options="--delete --watch"
+        oc_options="--progress"
     fi        
     
 
     replica_dir="${replica_volume_path}/"
 
     if [[ "${project}" == "" ]]; then
-        log_msg "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} ..."
-        oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} ${oc_options} --progress 
+        log_msg "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${oc_options} ..."
+        oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} ${oc_options}  
     else 
-        log_msg "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir}..."
-        oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} ${oc_options} --progress --namespace=${project}
+        log_msg "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options ${oc_options} ..."
+        oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} ${oc_options} --namespace=${project}
     fi
     sleep 60;
     log_msg "End OC RSYNC"
