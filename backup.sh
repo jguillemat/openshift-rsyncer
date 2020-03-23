@@ -112,11 +112,9 @@ main () {
     # Check final slash
     local source_dir=${pod_volume_path}
     [[ "${pod_volume_path}" != */ ]] && source_dir="${pod_volume_path}/"
-    [[ "${pod_volume_path}" == */ ]] && source_dir="${pod_volume_path: : -1}"
     
     # Check final slash
     [[ "${replica_volume_path}" != */ ]] && replica_dir="${replica_volume_path}/"
-    [[ "${replica_volume_path}" == */ ]] && replica_dir="${replica_volume_path: : -1}"
     # replica_dir="${replica_volume_path}/"
 
     if [[ "${project}" == "" ]]; then
