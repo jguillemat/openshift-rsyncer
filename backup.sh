@@ -109,16 +109,18 @@ main () {
     fi        
 
     log_msg "Checking NATIVE_RSYNC_OPTIONS ${rsync_options}..."
-    if [[ "${rsync_options}" == "" ]]; then
-       # rsync_options="-avpz --executability --acls --owner --group --times --specials"
-    fi        
+#    if [[ "${rsync_options}" == "" ]]; then
+#       rsync_options="-avpz --executability --acls --owner --group --times --specials"
+#    fi        
 
+#
     # Check final slash
-    local source_dir=${pod_volume_path}
+    local source_dir="${pod_volume_path}"
     [[ "${pod_volume_path}" != */ ]] && source_dir="${pod_volume_path}/"
     [[ "${pod_volume_path}" == */ ]] && source_dir="${pod_volume_path}"
     
     # Check final slash
+    local replica_dir=""
     [[ "${replica_volume_path}" != */ ]] && replica_dir="${replica_volume_path}/"
     [[ "${replica_volume_path}" == */ ]] && replica_dir="${replica_volume_path}"
 
@@ -126,22 +128,20 @@ main () {
     if [[ "${project}" == "" ]]; then
     
         if [[ "${rsync_options}" == "" ]]; then
-            log_msg "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${oc_options} ..."
-            oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options}  
+            log_msg "Start OC RSYNC from DIR ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${oc_options} ..."
+            oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options} 
         else
-            export RSYNC_RSH='oc rsh'
-            log_msg "Start RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${rsync_options} ..."
-            rsync ${rsync_options} ${pod_name}:${source_dir ${replica_dir}
+            log_msg "Start OC RSYNC from DIR ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${oc_options} ..."
+            rsync ${rsync_options} ${pod_name}:${source_dir} ${replica_dir}
         fi 
-        
     else 
         if [[ "${rsync_options}" == "" ]]; then
-            log_msg "Start OC RSYNC from PATH ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options ${oc_options} ..."
+            log_msg "Start OC RSYNC from DIR ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options ${oc_options} ..."
             oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options} --namespace=${project}
         else
-            log_msg "Start OC RSYNC from PATH ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options ${rsync_options} ..."
-            export RSYNC_RSH='oc rsh --namespace=${project}'
-            rsync ${rsync_options} ${pod_name}:${source_dir ${replica_dir} 
+            log_msg "Start OC RSYNC from DIR ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with rsync options ${rsync_options} ..."
+            export RSYNC_RSH="oc rsh --namespace=${project}"
+            rsync ${rsync_options} ${pod_name}:${source_dir} ${replica_dir}
         fi 
     fi
 
