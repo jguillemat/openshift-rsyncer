@@ -107,16 +107,24 @@ main () {
     if [[ "${oc_options}" == "" ]]; then
         oc_options="--progress"
     fi        
-    
 
-    replica_dir="${replica_volume_path}/"
+
+    # Check final slash
+    local source_dir=${pod_volume_path}
+    [[ "${pod_volume_path}" != */ ]] && source_dir="${pod_volume_path}/"
+    [[ "${pod_volume_path}" == */ ]] && source_dir="${pod_volume_path: : -1}"
+    
+    # Check final slash
+    [[ "${replica_volume_path}" != */ ]] && replica_dir="${replica_volume_path}/"
+    [[ "${replica_volume_path}" == */ ]] && replica_dir="${replica_volume_path: : -1}"
+    # replica_dir="${replica_volume_path}/"
 
     if [[ "${project}" == "" ]]; then
-        log_msg "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${oc_options} ..."
-        oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} ${oc_options}  
+        log_msg "Start OC RSYNC from PATH ${source_dir} of POD ${pod_name} into ${replica_dir} with options ${oc_options} ..."
+        oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options}  
     else 
-        log_msg "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options ${oc_options} ..."
-        oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} ${oc_options} --namespace=${project}
+        log_msg "Start OC RSYNC from PATH ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options ${oc_options} ..."
+        oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options} --namespace=${project}
     fi
     sleep 60;
     log_msg "End OC RSYNC"
