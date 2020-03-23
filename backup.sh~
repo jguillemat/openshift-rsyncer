@@ -1,10 +1,23 @@
 #!/bin/bash
+# 
+# Descrition:           
+#   Find in current namespace or in POD_PROJECT, a pod with "POD_SELECTOR" or "POD_NAME" 
+#   to "$ oc rsync" data from "POD_VOLUME_PATH" to "REPLICA_VOLUME_PATH" inside this pod.
+# 
+# Parameters:
+#   POD_PROJECT           (optional) namespace of source pod 
+#   POD_SELECTOR          (optional) node selector to find source pod 
+#   POD_NAME              (optional) name of pod to connect for get data 
+#   POD_VOLUME_PATH       (required) path inside pod to backup data 
+#   REPLICA_VOLUME_PATH   (optional) path of backup PVC/PV to store data 
+
+
 
 # EXIT ERRORS
 readonly E_NOPODSELECTOR=254      # CANNOT GET POD SELECTOR
-readonly E_NOPODNAME=253              # CANNOT GET POD NAME
-readonly E_NOVOLUME=252           # POD_VOLUME not set
-readonly E_NOERROR=0              # ALL IT's OK
+readonly E_NOPODNAME=253          # CANNOT GET POD NAME
+readonly E_NOVOLUME=252           # POD_VOLUME not specified
+readonly E_NOERROR=0              # ALL IT'S OK
 
 # --------------------------------------
 # FUNCTIONS
@@ -24,10 +37,8 @@ get_pod_name(){
     local p_project="${2}"
     local p_name=""
     if [[ "${p_project}" == "" ]]; then
-        # echo "Finding pod with selector ${p_selector} ..."
         p_name=$(oc get po --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
     else
-        # echo "Finding pod th selector ${p_selector} into project ${p_project} ..."
         p_name=$(oc get po --namespace=$p_project --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
     fi
     echo "${p_name}"	  

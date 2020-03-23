@@ -1,14 +1,28 @@
 #!/bin/bash
+# 
+# Descrition:           
+#   Find in current namespace or in POD_PROJECT, a pod with "POD_SELECTOR" or "POD_NAME" 
+#   to "$ oc rsync" data from "POD_VOLUME_PATH" to "REPLICA_VOLUME_PATH" inside this pod.
+# 
+# Parameters:
+#   POD_PROJECT           (optional) namespace of source pod 
+#   POD_SELECTOR          (optional) node selector to find source pod 
+#   POD_NAME              (optional) name of pod to connect for get data 
+#   POD_VOLUME_PATH       (required) path inside pod to backup data 
+#   REPLICA_VOLUME_PATH   (optional) path of backup PVC/PV to store data 
+
+
 
 # EXIT ERRORS
 readonly E_NOPODSELECTOR=254      # CANNOT GET POD SELECTOR
-readonly E_NOPODNAME=253              # CANNOT GET POD NAME
-readonly E_NOVOLUME=252           # POD_VOLUME not set
-readonly E_NOERROR=0              # ALL IT's OK
+readonly E_NOPODNAME=253          # CANNOT GET POD NAME
+readonly E_NOVOLUME=252           # POD_VOLUME not specified
+readonly E_NOERROR=0              # ALL IT'S OK
 
 # --------------------------------------
 # FUNCTIONS
 # --------------------------------------
+
 is_empty() {
     local var="${1}"
     local empty=1
