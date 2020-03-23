@@ -10,7 +10,7 @@
 #   POD_NAME              (optional) name of pod to connect for get data.
 #   POD_VOLUME_PATH       (required) path inside pod to backup data.
 #   REPLICA_VOLUME_PATH   (optional) path of backup PVC/PV to store data. Defaults: "//data-replica"
-#   OC_RSYNC_OPTIONS      (optional) Parameters to pass to "oc rsync" . Defaults "--delete --watch"
+#   OC_RSYNC_OPTIONS      (optional) Parameters to pass to "oc rsync" . Defaults "--delete"
 
 
 # EXIT ERRORS
@@ -101,7 +101,7 @@ main () {
     
     log_msg "Checking OC OPTIONS ${oc_options}... "
     if [[ "${oc_options}" == "" ]]; then
-        oc_options="--delete --watch"
+        oc_options="--delete"
     fi        
     
 
