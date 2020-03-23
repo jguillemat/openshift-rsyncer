@@ -13,7 +13,6 @@
 #   OC_RSYNC_OPTIONS      (optional) Parameters to pass to "oc rsync" . Defaults "--delete --watch"
 
 
-
 # EXIT ERRORS
 readonly E_NOPODSELECTOR=254      # CANNOT GET POD SELECTOR
 readonly E_NOPODNAME=253          # CANNOT GET POD NAME
@@ -46,6 +45,12 @@ get_pod_name(){
     echo "${p_name}"	  
 }
 
+
+log_msg() {
+		echo "$(date +%Y%m%d%H%M) - $1"
+}
+
+
 # --------------------------------------
 # MAIN METHOD
 # --------------------------------------
@@ -64,37 +69,37 @@ main () {
     local oc_options="${OC_RSYNC_OPTIONS}"
     
 
-    echo "Checking Pod Volume ${pod_volume_path} to backup...."
+    log_msg "Checking Pod Volume ${pod_volume_path} to backup...."
     if [[ "${pod_volume_path}" == "" ]]; then
-        echo "ERROR: POD_VOLUME_PATH not specified. Exit."
+        log_msg "ERROR: POD_VOLUME_PATH not specified. Exit."
         exit "${E_NOVOLUME}"
     fi
 
-    echo "Checking Volume ${replica_volume_path} to store data...."
+    log_msg "Checking Volume ${replica_volume_path} to store data...."
     if [[ "${replica_volume_path}" == "" ]]; then
         replica_volume_path="/data-replica"
     fi
            
-    echo "Checking Pod Name ${pod_name}... "
+    log_msg "Checking Pod Name ${pod_name}... "
     if [[ "${pod_name}" == "" ]]; then
     
-        echo "Checking Pod Selector ${pod_selector} ...."
+        log_msg "Checking Pod Selector ${pod_selector} ...."
         if [[ "${pod_selector}" == "" ]]; then
-            echo "ERROR: POD_SELECTOR or POD_NAME not specified. Exit."
+            log_msg "ERROR: POD_SELECTOR or POD_NAME not specified. Exit."
             exit "${E_NOPODSELECTOR}"
         fi        
         
         pod_name="$( get_pod_name ${selector} ${project} )"
-        echo "Found Pod Name ${pod_name} ...."
+        log_msg "Found Pod Name ${pod_name} ...."
         if [[ "${pod_name}" == "" ]]; then
-            echo "ERROR: CANNOT GET POD_NAME. Exit."
+            log_msg "ERROR: CANNOT GET POD_NAME. Exit."
             exit "${E_NOPODNAME}"
         fi  
     else
-        echo "Specified POD_NAME=${pod_name}"
+        log_msg "Specified POD_NAME=${pod_name}"
     fi
     
-    echo "Checking OC OPTIONS ${oc_options}... "
+    log_msg "Checking OC OPTIONS ${oc_options}... "
     if [[ "${oc_options}" == "" ]]; then
         oc_options="--delete --watch"
     fi        
@@ -103,14 +108,14 @@ main () {
     replica_dir="${replica_volume_path}/"
 
     if [[ "${project}" == "" ]]; then
-        echo "$(date +%Y%m%d%H%M) - Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} ..."
+        log_msg "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} ..."
         oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} ${oc_options} --progress 
     else 
-        echo "$(date +%Y%m%d%H%M) - Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir}..."
+        log_msg "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir}..."
         oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} ${oc_options} --progress --namespace=${project}
     fi
     sleep 60;
-    echo "$(date +%Y%m%d%H%M) - End OC RSYNC"
+    log_msg "End OC RSYNC"
 }
 
 
