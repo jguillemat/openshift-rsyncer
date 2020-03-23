@@ -11,7 +11,7 @@
 #   POD_VOLUME_PATH       (required) path inside pod to backup data.
 #   REPLICA_VOLUME_PATH   (optional) path of backup PVC/PV to store data. Defaults: "//data-replica"
 #   OC_RSYNC_OPTIONS      (optional) Parameters to pass to "oc rsync" . Defaults "--progress"
-
+#   NATIVE_RSYNC_OPTIONS  (optional) Native parameters to pass to "rsync" . Defaults "-avpz --executability --acls --owner --group --times --specials"
 
 # EXIT ERRORS
 readonly E_NOPODSELECTOR=254      # CANNOT GET POD SELECTOR
@@ -71,7 +71,7 @@ main () {
     local replica_volume_path="${REPLICA_VOLUME_PATH}"
 
     local oc_options="${OC_RSYNC_OPTIONS}"
-    
+    local rsync_options="${NATIVE_RSYNC_OPTIONS}"
 
     log_msg "Checking Pod Volume ${pod_volume_path} to backup...."
     if [[ "${pod_volume_path}" == "" ]]; then
@@ -103,11 +103,15 @@ main () {
         log_msg "Specified POD_NAME=${pod_name}"
     fi
     
-    log_msg "Checking OC OPTIONS ${oc_options}... "
+    log_msg "Checking OC_RSYNC_OPTIONS ${oc_options}..."
     if [[ "${oc_options}" == "" ]]; then
         oc_options="--progress"
     fi        
 
+    log_msg "Checking NATIVE_RSYNC_OPTIONS ${rsync_options}..."
+    if [[ "${rsync_options}" == "" ]]; then
+       # rsync_options="-avpz --executability --acls --owner --group --times --specials"
+    fi        
 
     # Check final slash
     local source_dir=${pod_volume_path}
@@ -120,14 +124,29 @@ main () {
 
 
     if [[ "${project}" == "" ]]; then
-        log_msg "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${oc_options} ..."
-        oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options}  
+    
+        if [[ "${rsync_options}" == "" ]]; then
+            log_msg "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${oc_options} ..."
+            oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options}  
+        else
+            export RSYNC_RSH='oc rsh'
+            log_msg "Start RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${rsync_options} ..."
+            rsync ${rsync_options} ${pod_name}:${source_dir ${replica_dir}
+        fi 
+        
     else 
-        log_msg "Start OC RSYNC from PATH ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options ${oc_options} ..."
-        oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options} --namespace=${project}
+        if [[ "${rsync_options}" == "" ]]; then
+            log_msg "Start OC RSYNC from PATH ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options ${oc_options} ..."
+            oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options} --namespace=${project}
+        else
+            log_msg "Start OC RSYNC from PATH ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options ${rsync_options} ..."
+            export RSYNC_RSH='oc rsh --namespace=${project}'
+            rsync ${rsync_options} ${pod_name}:${source_dir ${replica_dir} 
+        fi 
     fi
+
     sleep 60;
-    log_msg "End OC RSYNC"
+    log_msg "End of OC RSYNC"
 }
 
 
