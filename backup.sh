@@ -10,6 +10,7 @@
 #   POD_NAME              (optional) name of pod to connect for get data.
 #   POD_VOLUME_PATH       (required) path inside pod to backup data.
 #   REPLICA_VOLUME_PATH   (optional) path of backup PVC/PV to store data. Defaults: "//data-replica"
+#   OC_RSYNC_OPTIONS      (optional) Parameters to pass to "oc rsync" . Defaults "--delete --watch"
 
 
 
@@ -60,6 +61,9 @@ main () {
     local -r pod_selector="${POD_SELECTOR}"
     local replica_volume_path="${REPLICA_VOLUME_PATH}"
 
+    local oc_options="${OC_RSYNC_OPTIONS}"
+    
+
     echo "Checking Pod Volume ${pod_volume_path} to backup...."
     if [[ "${pod_volume_path}" == "" ]]; then
         echo "ERROR: POD_VOLUME_PATH not specified. Exit."
@@ -89,18 +93,24 @@ main () {
     else
         echo "Specified POD_NAME=${pod_name}"
     fi
+    
+    echo "Checking OC OPTIONS ${oc_options}... "
+    if [[ "${oc_options}" == "" ]]; then
+        oc_options="--delete --watch"
+    fi        
+    
 
     replica_dir="${replica_volume_path}/"
 
     if [[ "${project}" == "" ]]; then
-        echo "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} ..."
-        # oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} --progress 
+        echo "$(date +%Y%m%d%H%M) - Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} ..."
+        oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} ${oc_options} --progress 
     else 
-        echo "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir}..."
-        # oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} --progress --namespace=${project}
+        echo "$(date +%Y%m%d%H%M) - Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir}..."
+        oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} ${oc_options} --progress --namespace=${project}
     fi
     sleep 60;
-    echo "End OC RSYNC."
+    echo "$(date +%Y%m%d%H%M) - End OC RSYNC"
 }
 
 
