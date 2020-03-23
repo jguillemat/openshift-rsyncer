@@ -7,7 +7,7 @@ ENV USER_PASS='Redhat01'
 
 LABEL io.k8s.description="Openshift OC rsync tool" \
       io.k8s.display-name="rsyncer-0.0.1" \
-      io.openshift.tags="rsyncer,0.0.1" \
+      io.openshift.tags="rsyncer,0.0.1"
 
 RUN \
   mkdir $SCRIPTS_HOME && \
