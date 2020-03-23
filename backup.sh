@@ -5,11 +5,11 @@
 #   to "$ oc rsync" data from "POD_VOLUME_PATH" to "REPLICA_VOLUME_PATH" inside this pod.
 # 
 # Parameters:
-#   POD_PROJECT           (optional) namespace of source pod 
-#   POD_SELECTOR          (optional) node selector to find source pod 
-#   POD_NAME              (optional) name of pod to connect for get data 
-#   POD_VOLUME_PATH       (required) path inside pod to backup data 
-#   REPLICA_VOLUME_PATH   (optional) path of backup PVC/PV to store data 
+#   POD_PROJECT           (optional) namespace of source pod. Default: current namespace
+#   POD_SELECTOR          (optional) node selector to find source pod.
+#   POD_NAME              (optional) name of pod to connect for get data.
+#   POD_VOLUME_PATH       (required) path inside pod to backup data.
+#   REPLICA_VOLUME_PATH   (optional) path of backup PVC/PV to store data. Defaults: "//data-replica"
 
 
 
@@ -93,10 +93,10 @@ main () {
     replica_dir="${replica_volume_path}/"
 
     if [[ "${project}" == "" ]]; then
-        echo "Start OC RSYNC from POD ${pod_name} into ${replica_dir} ..."
+        echo "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} into ${replica_dir} ..."
         # oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} --progress 
     else 
-        echo "Start OC RSYNC from POD ${pod_name} of project ${project} into ${replica_dir}..."
+        echo "Start OC RSYNC from PATH ${pod_volume_path} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir}..."
         # oc rsync ${pod_name}:${pod_volume_path} ${replica_dir} --progress --namespace=${project}
     fi
     sleep 60;
