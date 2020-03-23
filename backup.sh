@@ -49,6 +49,22 @@ get_pod_name(){
     echo "${p_name}"	  
 }
 
+check_rsync_in_pod() {
+    local p_name="${1}"
+    local found=1
+
+    $(oc exec $p_name rsync )
+    if [ $? -eq 0 ]
+    then
+      echo "Successfully found rsync command"
+      found=0
+    else
+      echo "Could not find rsync command" 
+      found=1
+    fi
+    return "${found}"
+}
+
 
 log_msg() {
 		echo "$(date +%Y%m%d%H%M) - $1"

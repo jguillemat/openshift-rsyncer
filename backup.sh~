@@ -11,7 +11,7 @@
 #   POD_VOLUME_PATH       (required) path inside pod to backup data.
 #   REPLICA_VOLUME_PATH   (optional) path of backup PVC/PV to store data. Defaults: "//data-replica"
 #   OC_RSYNC_OPTIONS      (optional) Parameters to pass to "oc rsync" . Defaults "--progress"
-#   NATIVE_RSYNC_OPTIONS  (optional) Native parameters to pass to "rsync" . Defaults "-avpz --executability --acls --owner --group --times --specials"
+#   NATIVE_RSYNC_OPTIONS  (optional) Native parameters to pass to "rsync" . Defaults "-avpz --executability --acls --owner --group --times --specials --progress"
 
 # EXIT ERRORS
 readonly E_NOPODSELECTOR=254      # CANNOT GET POD SELECTOR
@@ -47,6 +47,22 @@ get_pod_name(){
         p_name=$(oc get po --namespace=$p_project --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
     fi
     echo "${p_name}"	  
+}
+
+check_rsync_in_pod() {
+    local p_name="${1}"
+    local found=1
+
+    $(oc exec $p_name rsync )
+    if [ $? -eq 0 ]
+    then
+      echo "Successfully found rsync command"
+      found=0
+    else
+      echo "Could not find rsync command" 
+      found=1
+    fi
+    return "${found}"
 }
 
 
