@@ -4,7 +4,6 @@ MAINTAINER openshift@essiprojects.com
 
 ENV HOME /opt/app-root
 ENV SCRIPTS_HOME /opt/app-root
-ENV USER_PASS 'Redhat01'
 ENV SYNC_PLAN_PATH /opt/app-root/conf
 
 LABEL io.k8s.description="Openshift OC rsync tool" \
@@ -20,10 +19,7 @@ RUN yum install rsync tar glusterfs-fuse nfs-utils iputils bind-utils -y && yum 
 RUN \
   mkdir $SCRIPTS_HOME && mkdir $SYNC_PLAN_PATH && \
   groupadd -g 10001 backup && \
-  useradd -r -u 10001 -g backup -G wheel --home-dir $SCRIPTS_HOME backup && \
-  groupadd -g 10002 rsyncuser && \
-  useradd -r -u 10002 -g rsyncuser -G nfsnobody --home-dir $SCRIPTS_HOME rsyncuser && \
-  echo "${USER_PASS}" | passwd rsyncuser --stdin
+  useradd -r -u 10001 -g backup -G wheel --home-dir $SCRIPTS_HOME backup
 
 COPY backup.sh $SCRIPTS_HOME/
 COPY sync-plan.json $SYNC_PLAN_PATH/
