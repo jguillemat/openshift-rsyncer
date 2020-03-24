@@ -1,4 +1,5 @@
-FROM ose-cli:v3.11
+FROM openshift/ose-cli:latest
+# FROM ose-cli:v3.11
 MAINTAINER openshift@essiprojects.com
 
 ENV HOME /opt/app-root
