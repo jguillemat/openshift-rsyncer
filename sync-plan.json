@@ -13,14 +13,14 @@
 }
 {
 	"SOURCE_POD":{
-		"POD_PROJECT": "pvc-backuper",
+		"POD_PROJECT": "",
 		"POD_SELECTOR": "deploymentconfig=httpd",
 		"POD_NAME": "",
-		"POD_VOLUME_PATH": "/data2"
+		"POD_VOLUME_PATH": "/data-malo"
 	},
 	"RSYNC_OPTIONS":{
 		"OC_RSYNC_OPTIONS": "--progress",
 		"NATIVE_RSYNC_OPTIONS": "-avz"
 	},
-	"REPLICA_VOLUME_PATH": "/data-replica"
+	"REPLICA_VOLUME_PATH": "/data-replica-malo"
 }

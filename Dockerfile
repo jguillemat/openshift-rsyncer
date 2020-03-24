@@ -23,9 +23,10 @@ RUN \
 
 COPY backup.sh $SCRIPTS_HOME/
 COPY sync-plan.json $SYNC_PLAN_PATH/
+COPY jq $SCRIPTS_HOME/
 
-RUN \
-  wget -O $SCRIPTS_HOME/jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+# RUN \
+#  wget -O $SCRIPTS_HOME/jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
 
 RUN \
  chmod u+s /usr/bin/sed && \

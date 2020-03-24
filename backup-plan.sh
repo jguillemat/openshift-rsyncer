@@ -14,6 +14,7 @@
 #   NATIVE_RSYNC_OPTIONS  (optional) Native parameters to pass to "rsync" . Defaults "-avpz --executability --acls --owner --group --times --specials --progress"
 
 # EXIT ERRORS
+readonly E_NOSYNCPLAN=255         # CANNOT GET SYNC PLAN
 readonly E_NOPODSELECTOR=254      # CANNOT GET POD SELECTOR
 readonly E_NOPODNAME=253          # CANNOT GET POD NAME
 readonly E_NOVOLUME=252           # POD_VOLUME not specified
@@ -72,9 +73,9 @@ log_msg() {
 
 
 # --------------------------------------
-# MAIN METHOD
+# SYNCHRONIZE METHOD
 # --------------------------------------
-main () {
+synchronize_data () {
 
     local -r src="/source"
     local -r dst="/backup"
@@ -165,21 +166,39 @@ main () {
     log_msg "End of OC RSYNC"
 }
 
+# ----------------------
+# 
+# 
+# --------------------------------
 
-PLAN_CONFIG="sync-plan.json"
+# Check Plan file 
+# ------------------------------------------
+local PLAN_DIR="${SYNC_PLAN_PATH}"
+if [[ "${PLAN_DIR}" == "" ]]; then
+    PLAN_DIR = "/opt/app-root/conf"
+fi
+local PLAN_FILE="${pod_volume_path}/sync-plan.json"
 
+
+# Check plan data 
+# ------------------------------------------
+
+if [[ -z $PLAN_FILE ]]; then
+    log_msg "ERROR - Not sync plan data into ${PLAN_FILE} "
+    exit "${E_NOSYNCPLAN}" 
+fi;
+
+
+# Process plan data 
+# ------------------------------------------
 
 while read pod_name pod_path ; do
 	echo "hola"
 	echo "$pod_name"
 	echo "$pod_path"
-done < <(jq -r '.SOURCE_PODS[]|"\(.POD_NAME) \(.POD_VOLUME_PATH)"' ${PLAN_CONFIG})
+	synchronize_data "$@"
+	
+done < <(jq -r '.SOURCE_PODS[]|"\(.POD_NAME) \(.POD_VOLUME_PATH)"' ${PLAN_FILE})
 
-
-
-main "$@"
-
-
-
-
+log_msg "Exit script with no error."
 exit "${E_NOERROR}"
