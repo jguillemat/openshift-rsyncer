@@ -19,7 +19,6 @@ RUN yum install rsync tar glusterfs-fuse nfs-utils iputils bind-utils -y && yum 
 
 RUN \
   mkdir $SCRIPTS_HOME && mkdir $SYNC_PLAN_PATH && \
-  groupadd -g 65534 nfsnobody && \
   groupadd -g 10001 backup && \
   useradd -r -u 10001 -g backup -G wheel --home-dir $SCRIPTS_HOME backup && \
   groupadd -g 10002 rsyncuser && \
