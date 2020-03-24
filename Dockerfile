@@ -22,7 +22,7 @@ RUN \
 RUN yum update -y && yum clean all && rm -rf /var/cache/yum/*
 
 # Install rsync tool
-RUN yum install rsync tar -y && yum clean all && rm -rf /var/cache/yum/*
+RUN yum install rsync tar glusterfs-fuse -y && yum clean all && rm -rf /var/cache/yum/*
 
 COPY backup.sh $SCRIPTS_HOME/
 
