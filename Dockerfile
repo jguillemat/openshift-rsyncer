@@ -15,7 +15,7 @@ LABEL io.k8s.description="Openshift OC rsync tool" \
 RUN yum update -y && yum clean all && rm -rf /var/cache/yum/*
 
 # Install rsync, gluster & nfs clients
-RUN yum install rsync tar glusterfs-fuse nfs-utils -y && yum clean all && rm -rf /var/cache/yum/*
+RUN yum install rsync tar glusterfs-fuse nfs-utils iputils bind-utils -y && yum clean all && rm -rf /var/cache/yum/*
 
 RUN \
   mkdir $SCRIPTS_HOME && mkdir $SYNC_PLAN_PATH && \
