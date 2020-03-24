@@ -22,6 +22,7 @@ RUN \
   useradd -r -u 10001 -g backup -G wheel --home-dir $SCRIPTS_HOME backup
 
 COPY backup.sh $SCRIPTS_HOME/
+COPY backup-plan.sh $SCRIPTS_HOME/
 COPY sync-plan.json $SYNC_PLAN_PATH/
 COPY jq $SCRIPTS_HOME/
 

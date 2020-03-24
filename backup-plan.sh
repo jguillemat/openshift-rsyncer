@@ -39,9 +39,11 @@ is_empty() {
 }
 
 get_pod_name(){
-    local p_selector="${1}"
-    local p_project="${2}"
+
+    local p_project="${1}"
+    local p_selector="${2}"
     local p_name=""
+
     if [[ "${p_project}" == "" ]]; then
         p_name=$(oc get po --selector=$p_selector --no-headers -o jsonpath='{range .items[?(@.status.phase=="Running")]}{.metadata.name}{"\n"}{end}' | head -n1)
     else
@@ -80,18 +82,20 @@ synchronize_data () {
     local -r src="/source"
     local -r dst="/backup"
 
-    local pod_name="${POD_NAME}"
-    local -r pod_volume_path="${POD_VOLUME_PATH}"
-    local -r project="${POD_PROJECT}"
+
+    local p_project="${1}"
+    local p_selector="${2}"
+    local p_name="${3}"
+    local p_volume_path="${4}"
     
-    local -r pod_selector="${POD_SELECTOR}"
+    
     local replica_volume_path="${REPLICA_VOLUME_PATH}"
 
     local oc_options="${OC_RSYNC_OPTIONS}"
     local rsync_options="${NATIVE_RSYNC_OPTIONS}"
 
-    log_msg "Checking Pod Volume ${pod_volume_path} to backup...."
-    if [[ "${pod_volume_path}" == "" ]]; then
+    log_msg "Checking Pod Volume ${p_volume_path} to backup...."
+    if [[ "${p_volume_path}" == "" ]]; then
         log_msg "ERROR: POD_VOLUME_PATH not specified. Exit."
         exit "${E_NOVOLUME}"
     fi
@@ -101,23 +105,23 @@ synchronize_data () {
         replica_volume_path="/data-replica"
     fi
            
-    log_msg "Checking Pod Name ${pod_name}... "
-    if [[ "${pod_name}" == "" ]]; then
+    log_msg "Checking Pod Name ${p_name}... "
+    if [[ "${p_name}" == "" ]]; then
     
-        log_msg "Checking Pod Selector ${pod_selector} ...."
-        if [[ "${pod_selector}" == "" ]]; then
+        log_msg "Checking Pod Selector ${p_selector} ...."
+        if [[ "${p_selector}" == "" ]]; then
             log_msg "ERROR: POD_SELECTOR or POD_NAME not specified. Exit."
             exit "${E_NOPODSELECTOR}"
         fi        
         
-        pod_name="$( get_pod_name ${selector} ${project} )"
-        log_msg "Found Pod Name ${pod_name} ...."
-        if [[ "${pod_name}" == "" ]]; then
+        p_name="$( get_pod_name ${p_project} ${p_selector} )"
+        log_msg "Found Pod Name ${p_name} ...."
+        if [[ "${p_name}" == "" ]]; then
             log_msg "ERROR: CANNOT GET POD_NAME. Exit."
             exit "${E_NOPODNAME}"
         fi  
     else
-        log_msg "Specified POD_NAME=${pod_name}"
+        log_msg "Specified POD_NAME=${p_name}"
     fi
     
     log_msg "Checking OC_RSYNC_OPTIONS ${oc_options}..."
@@ -132,9 +136,9 @@ synchronize_data () {
 
 #
     # Check final slash
-    local source_dir="${pod_volume_path}"
-    [[ "${pod_volume_path}" != */ ]] && source_dir="${pod_volume_path}/"
-    [[ "${pod_volume_path}" == */ ]] && source_dir="${pod_volume_path}"
+    local source_dir="${p_volume_path}"
+    [[ "${p_volume_path}" != */ ]] && source_dir="${p_volume_path}/"
+    [[ "${p_volume_path}" == */ ]] && source_dir="${p_volume_path}"
     
     # Check final slash
     local replica_dir=""
@@ -145,20 +149,20 @@ synchronize_data () {
     if [[ "${project}" == "" ]]; then
     
         if [[ "${rsync_options}" == "" ]]; then
-            log_msg "Start OC RSYNC from DIR ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options ${oc_options} ..."
-            oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options} 
+            log_msg "Start OC RSYNC from DIR ${p_volume_path} of POD ${p_name} into ${replica_dir} with options ${oc_options} ..."
+            oc rsync ${p_name}:${source_dir} ${replica_dir} ${oc_options} 
         else
-            log_msg "Start OC RSYNC from DIR ${pod_volume_path} of POD ${pod_name} into ${replica_dir} with options '${rsync_options}' ..."
-            rsync ${rsync_options} ${pod_name}:${source_dir} ${replica_dir}
+            log_msg "Start OC RSYNC from DIR ${p_volume_path} of POD ${p_name} into ${replica_dir} with options '${rsync_options}' ..."
+            rsync ${rsync_options} ${p_name}:${source_dir} ${replica_dir}
         fi 
     else 
         if [[ "${rsync_options}" == "" ]]; then
-            log_msg "Start OC RSYNC from DIR ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with options '${oc_options}' ..."
-            oc rsync ${pod_name}:${source_dir} ${replica_dir} ${oc_options} --namespace=${project}
+            log_msg "Start OC RSYNC from DIR ${source_dir} of POD ${p_name} from NAMESPACE ${project} into ${replica_dir} with options '${oc_options}' ..."
+            oc rsync ${p_name}:${source_dir} ${replica_dir} ${oc_options} --namespace=${project}
         else
-            log_msg "Start OC RSYNC from DIR ${source_dir} of POD ${pod_name} from NAMESPACE ${project} into ${replica_dir} with rsync options '${rsync_options}' ..."
+            log_msg "Start OC RSYNC from DIR ${source_dir} of POD ${p_name} from NAMESPACE ${project} into ${replica_dir} with rsync options '${rsync_options}' ..."
             export RSYNC_RSH="oc rsh --namespace=${project}"
-            rsync ${rsync_options} ${pod_name}:${source_dir} ${replica_dir}
+            rsync ${rsync_options} ${p_name}:${source_dir} ${replica_dir}
         fi 
     fi
 
@@ -166,8 +170,8 @@ synchronize_data () {
     log_msg "End of OC RSYNC"
 }
 
-# ----------------------
-# 
+# --------------------------------
+# Main method
 # 
 # --------------------------------
 
@@ -177,7 +181,7 @@ local PLAN_DIR="${SYNC_PLAN_PATH}"
 if [[ "${PLAN_DIR}" == "" ]]; then
     PLAN_DIR = "/opt/app-root/conf"
 fi
-local PLAN_FILE="${pod_volume_path}/sync-plan.json"
+local PLAN_FILE="${PLAN_DIR}/sync-plan.json"
 
 
 # Check plan data 
@@ -192,13 +196,16 @@ fi;
 # Process plan data 
 # ------------------------------------------
 
-while read pod_name pod_path ; do
-	echo "hola"
-	echo "$pod_name"
-	echo "$pod_path"
-	synchronize_data "$@"
+while read pod_project pod_selector pod_name pod_path ; do
+    echo "Reading entry ..."
+	echo " pod_project=$pod_project"
+	echo " pod_selector=$pod_selector"
+	echo " pod_name=$pod_name"
+	echo " pod_path=$pod_path"
 	
-done < <(jq -r '.SOURCE_PODS[]|"\(.POD_NAME) \(.POD_VOLUME_PATH)"' ${PLAN_FILE})
+	synchronize_data "$pod_project" "$pod_selector" "$pod_name" "$pod_path"
+	
+done < <(jq -r '.SOURCE_PODS[]|"\(.POD_PROJECT) \(.POD_SELECTOR) \(.POD_NAME) \(.POD_VOLUME_PATH)"' ${PLAN_FILE})
 
 log_msg "Exit script with no error."
 exit "${E_NOERROR}"
