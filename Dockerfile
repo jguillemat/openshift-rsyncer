@@ -4,7 +4,7 @@ MAINTAINER openshift@essiprojects.com
 
 ENV HOME /opt/app-root
 ENV SCRIPTS_HOME /opt/app-root
-ENV USER_PASS='Redhat01'
+ENV USER_PASS 'Redhat01'
 ENV SYNC_PLAN_PATH /opt/app-root/conf
 
 LABEL io.k8s.description="Openshift OC rsync tool" \
@@ -29,11 +29,17 @@ RUN \
 COPY backup.sh $SCRIPTS_HOME/
 COPY sync-plan.json $SYNC_PLAN_PATH/
 
-chmod u+s /usr/bin/sed && \
- chmod +x $SCRIPTS_HOME/backup.sh 
+RUN \
+  wget -O $SCRIPTS_HOME/jq https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64
+
+RUN \
+ chmod u+s /usr/bin/sed && \
+ chmod +x $SCRIPTS_HOME/*.sh && \
+ chmod +x $SCRIPTS_HOME/jq 
 
 # USER 10001
 USER root
 
 WORKDIR $SCRIPTS_HOME
 ENTRYPOINT ["/bin/bash", "backup.sh"]
+
