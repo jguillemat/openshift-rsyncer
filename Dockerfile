@@ -5,6 +5,7 @@ MAINTAINER openshift@essiprojects.com
 ENV HOME /opt/app-root
 ENV SCRIPTS_HOME /opt/app-root
 ENV SYNC_PLAN_PATH /opt/app-root/conf
+ENV PATH $PATH:$SCRIPTS_HOME
 
 LABEL io.k8s.description="Openshift OC rsync tool" \
       io.k8s.display-name="rsyncer-0.0.1" \

@@ -177,11 +177,11 @@ synchronize_data () {
 
 # Check Plan file 
 # ------------------------------------------
-local PLAN_DIR="${SYNC_PLAN_PATH}"
+PLAN_DIR="${SYNC_PLAN_PATH}"
 if [[ "${PLAN_DIR}" == "" ]]; then
     PLAN_DIR = "/opt/app-root/conf"
 fi
-local PLAN_FILE="${PLAN_DIR}/sync-plan.json"
+PLAN_FILE="${PLAN_DIR}/sync-plan.json"
 
 
 # Check plan data 
@@ -193,6 +193,8 @@ if [[ -z $PLAN_FILE ]]; then
 fi;
 
 
+
+# ------------------------------------------
 # Process plan data 
 # ------------------------------------------
 
