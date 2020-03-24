@@ -1,0 +1,32 @@
+{
+	"SOURCE_PODS":[
+		{
+		
+		"POD_PROJECT": "demo",
+		"POD_SELECTOR": "node1.example.com",
+		"POD_NAME": "demo1",
+		"POD_VOLUME_PATH": "/data"
+		},
+		{
+		
+		"POD_PROJECT": "demo",
+		"POD_SELECTOR": "node1.example.com",
+		"POD_NAME": "demo1",
+		"POD_VOLUME_PATH": "/data"
+		},
+		{
+		
+		"POD_PROJECT": "demo",
+		"POD_SELECTOR": "node1.example.com",
+		"POD_NAME": "demo1",
+		"POD_VOLUME_PATH": "/data"
+		}
+	],
+
+	"RSYNC_OPTIONS":{
+		"OC_RSYNC_OPTIONS": "--delete",
+		"NATIVE_RSYNC_OPTIONS": "A"
+	},
+
+	"REPLICA_VOLUME_PATH": "/data-replica"
+}

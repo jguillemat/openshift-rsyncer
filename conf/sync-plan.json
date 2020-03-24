@@ -1,26 +1,24 @@
 {
-	"SOURCE_POD":{
+	"SOURCE_PODS": [ {
 		"POD_PROJECT": "pvc-backuper",
 		"POD_SELECTOR": "deploymentconfig=httpd",
-		"POD_NAME": "",
-		"POD_VOLUME_PATH": "/data"
-	},
-	"RSYNC_OPTIONS":{
+		"POD_VOLUME_PATH": "/data",
+		"REPLICA_VOLUME_PATH": "/data-replica/1"
+	}, {
+		"POD_PROJECT": "pvc-backuper",
+		"POD_SELECTOR": "deploymentconfig=httpd1",
+		"POD_VOLUME_PATH": "/data2",
+		"REPLICA_VOLUME_PATH": "/data-replica/2"
+	}, {
+		"POD_PROJECT": "pvc-backuper",
+		"POD_SELECTOR": "deploymentconfig=httpd2",
+		"POD_VOLUME_PATH": "/data3",
+		"REPLICA_VOLUME_PATH": "/data-replica/3"
+	} 
+	], 
+	"CONFIGURATION": {
 		"OC_RSYNC_OPTIONS": "--progress",
 		"NATIVE_RSYNC_OPTIONS": "-avz"
-	},
-	"REPLICA_VOLUME_PATH": "/data-replica"
-}
-{
-	"SOURCE_POD":{
-		"POD_PROJECT": "",
-		"POD_SELECTOR": "deploymentconfig=httpd",
-		"POD_NAME": "",
-		"POD_VOLUME_PATH": "/data-malo"
-	},
-	"RSYNC_OPTIONS":{
-		"OC_RSYNC_OPTIONS": "--progress",
-		"NATIVE_RSYNC_OPTIONS": "-avz"
-	},
-	"REPLICA_VOLUME_PATH": "/data-replica-malo"
-}
+	}
+} 
+
