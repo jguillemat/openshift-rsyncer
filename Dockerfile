@@ -24,7 +24,7 @@ RUN \
 
 COPY backup.sh $SCRIPTS_HOME/
 COPY backup-plan.sh $SCRIPTS_HOME/
-COPY sync-plan.json $SYNC_PLAN_PATH/
+COPY conf/*.json $SYNC_PLAN_PATH/
 COPY jq $SCRIPTS_HOME/
 
 # RUN \

@@ -177,7 +177,8 @@ synchronize_data () {
 
 # Check Plan file 
 # ------------------------------------------
-PLAN_DIR="${SYNC_PLAN_PATH}"
+
+set PLAN_DIR="${SYNC_PLAN_PATH}"
 if [[ "${PLAN_DIR}" == "" ]]; then
     PLAN_DIR = "/opt/app-root/conf"
 fi
