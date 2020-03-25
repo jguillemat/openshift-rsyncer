@@ -105,9 +105,9 @@ function synchronize_data() {
         return "${E_NONAMESPACE}"
     fi        
         
-    # ---------------------------------------------
-    # Mount PVC locally via Gluster
-    # ---------------------------------------------
+    log_msg " ------------------------------------------------"
+    log_msg " Mount GlusterVol locally via Gluster"
+    log_msg " ------------------------------------------------"
 
     # Check final slash
     local source_dir=""
@@ -136,9 +136,10 @@ function synchronize_data() {
         fi
     fi
 
-    # ---------------------------------------------
-    # Mount NFS Endpoint into remote server
-    # ---------------------------------------------
+    log_msg " ------------------------------------------------"
+    log_msg " Mount NFS Endpoint in remote server"
+    log_msg " ------------------------------------------------"
+
     log_msg "REMOTE: Check remote mount point into ${p_remote_replica_dir}."
     if execute_remote "mount | grep $p_remote_replica_dir > /dev/null 2>&1"
     then
@@ -177,9 +178,9 @@ function synchronize_data() {
     execute_remote "mkdir -p ${replica_dir}"
     execute_remote "chown nfsnobody:nfsnobody ${replica_dir}"
 
-    # --------------------------
-    # Start rsync data    
-    # --------------------------
+    log_msg " ------------------------------------------------"
+    log_msg " Start rsync data"
+    log_msg " ------------------------------------------------"
 
     log_msg "Native RSYNC starts from DIR ${source_dir} of POD ${p_name} from NAMESPACE ${project} into ${replica_dir} with rsync options '${RSYNC_OPTIONS}' ..."
     rsync ${p_rsync_options} ${source_dir} ${p_remote_server}:/${replica_dir}
@@ -194,7 +195,7 @@ function synchronize_data() {
     # Umount Gluster Volume localy
     # ---------------------------------------------
     # log_msg "Unmounting GlusterVol from '${source_dir}' "
-    umount ${source_dir} --force
+    # umount ${source_dir} --force
 
     # ---------------------------------------------
     # Umount Remote NFS Replica dir
