@@ -117,7 +117,7 @@ synchronize_data () {
     mkdir -p "${source_dir}"
 
     log_msg "Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
-    mount -t fuse.glusterfs ${p_mount_data} ${source_dir}
+    mount -t glusterfs ${p_mount_data} ${source_dir}
 
     # ---------------------------------------------
     # Mount NFS Endpoint into remote server
@@ -146,16 +146,27 @@ synchronize_data () {
     ssh ${p_remote_server} mkdir -p "${replica_dir}"
     ssh ${p_remote_server} chown nfsnobody:nfsnobody "${replica_dir}"
 
-
     # --------------------------
     # Start rsync data    
     # --------------------------
 
     log_msg "Start NATIVE RSYNC from DIR ${source_dir} of POD ${p_name} from NAMESPACE ${project} into ${replica_dir} with rsync options '${RSYNC_OPTIONS}' ..."
-    rsync ${RSYNC_OPTIONS} ${source_dir} ${p_remote_server}:/${replica_dir}
+    rsync ${p_rsync_options} ${source_dir} ${p_remote_server}:/${replica_dir}
+    log_msg "NATIVE RSYNC End"
 
-#    sleep 60;
-    log_msg "End of Volume synchronization"
+    # ---------------------------------------------
+    # Umount Gluster Volume localy
+    # ---------------------------------------------
+    # log_msg "Unmounting GlusterVol from '${source_dir}' "
+    # umount ${source_dir} --force
+
+    # ---------------------------------------------
+    # Umount Remote NFS Replica dir
+    # ---------------------------------------------
+#     log_msg "Umounting NFS from '${p_remote_replica_dir}' into remote server"
+#     ssh ${p_remote_server} umount ${p_remote_replica_dir} --force
+    
+#     log_msg "End of Volume synchronization"
 }
 
 
