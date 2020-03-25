@@ -116,7 +116,7 @@ synchronize_data () {
     log_msg "Creating local directory ${source_dir}."
     mkdir -p "${source_dir}"
 
-    log_msg "Mounting GlusterVol locally into "
+    log_msg "Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
     mount -t fuse.glusterfs ${p_mount_data} ${source_dir}
 
     # ---------------------------------------------
