@@ -2,25 +2,34 @@
     "SOURCE_VOLUMES": [ {
         "NAMESPACE": "pvc-backuper",
         "PVC": "data-pvc",
-        "PV": "pvc-0e48b67d-6a98-11ea-a00e-001a4a461c22",
-        "GLUSTER_VOL": "vol_4619cd02f4cf514517c6043e33008f3d",
         "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_4619cd02f4cf514517c6043e33008f3d",
         "PVC_REPLICA": "replica-pvc"
-    }
-    , {
-        "NAMESPACE": "pvc-backuper",
-        "PVC": "data-pvc",
-        "PV": "pvc-0e48b67d-6a98-11ea-a00e-001a4a461c22",
-        "GLUSTER_VOL": "vol_4619cd02f4cf514517c6043e33008f3d",
-        "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_4619cd02f4cf514517c6043e33008f3d",
-        "PVC_REPLICA": "replica-pvc"
-    }
-    ], 
+    } , {
+        "NAMESPACE": "ci",
+        "PVC": "jenkins-gluster",
+        "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_a19d3ffd9dd133bbb76293c837b5e4d0",
+        "PVC_REPLICA": "jenkins-gluster-replica"
+    } , {
+        "NAMESPACE": "ci",
+        "PVC": "jenkins-gluster-recovered",
+        "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_f8582db5bcb2469c1fe1856dff6879b1",
+        "PVC_REPLICA": "jenkins-gluster-recovered-replica"
+    } , {
+        "NAMESPACE": "ci",
+        "PVC": "jenkins-scripts",
+        "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_f4769ba9065a9d369061671ca1a5edb2",
+        "PVC_REPLICA": "jenkins-scripts-replica"
+    } , {
+        "NAMESPACE": "ci",
+        "PVC": "jenkins-scripts-glusterfs",
+        "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_096fbfc4d946e4e7a862ea8d36638aa2",
+        "PVC_REPLICA": "jenkins-scripts-glusterfs-replica"
+    } ], 
     "CONFIGURATION": {
         "REMOTE_SERVER": "root@ocp-nexica-bastion.uoc.es",
         "REMOTE_NFS_ENDPOINT": "vdm-oscont.uoc.es:/PRO_openshift_repo/",
-        "REMOTE_REPLICA_DIR": "/tmp/test-nfs/",
-        "LOCAL_DATA_DIR": "/tmp/test-glusterfs/",
+        "REMOTE_REPLICA_DIR": "/mnt/test-nfs/",
+        "LOCAL_DATA_DIR": "/mnt/test-glusterfs/",
         "RSYNC_OPTIONS": "-auvz"
     }
 } 

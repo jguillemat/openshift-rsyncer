@@ -87,13 +87,11 @@ synchronize_data () {
     log_msg "Entering into synchronize_data ${*} ..."
     local p_namespace="$1"
     local p_pvc="$2"
-    local p_pv="$3"
-    local p_mount_data="$4"
-    local p_pvc_replica="$5"
+    local p_mount_data="$3"
+    local p_pvc_replica="$4"
 
 	echo " p_namespace=$p_namespace"
 	echo " p_pvc=$p_pvc"
-	echo " p_pv=$p_pv"
 	echo " p_mount_data=$p_mount_data"
 	echo " p_pvc_replica=$p_pvc_replica"   
 
@@ -266,20 +264,19 @@ fi
 # Process plan data 
 # ------------------------------------------
 log_msg "Starting processing sync plan file ..."
-while read p_namespace p_pvc p_pv p_mount_data p_pvc_replica; 
+while read p_namespace p_pvc p_mount_data p_pvc_replica; 
 do
     echo " ------------------------------------------------"
     echo " Reading JSON entry ..."
     echo " ------------------------------------------------"
 	echo " p_namespace=$p_namespace"
 	echo " p_pvc=$p_pvc"
-	echo " p_pv=$p_pv"
 	echo " p_mount_data=$p_mount_data"
 	echo " p_pvc_replica=$p_pvc_replica"
 
-	synchronize_data "${p_namespace}" "${p_pvc}" "${p_pv}" "${p_mount_data}" "${p_pvc_replica}"
+	synchronize_data "${p_namespace}" "${p_pvc}" "${p_mount_data}" "${p_pvc_replica}"
 	
-done < <(jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.PV) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"' ${PLAN_FILE})
+done < <(jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"' ${PLAN_FILE})
 
 
 log_msg "Exit script with no error."
