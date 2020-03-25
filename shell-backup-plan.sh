@@ -169,16 +169,29 @@ function synchronize_data() {
     [[ "${p_remote_replica_dir}" != */ ]] && p_remote_replica_dir="${p_remote_replica_dir}/"
     namespace_dir="${p_remote_replica_dir}${p_namespace}/"
 
-    log_msg "Creating remote namespace directory '${namespace_dir}'."
-    execute_remote "mkdir -p ${namespace_dir}"
-    execute_remote "chown nfsnobody:nfsnobody ${namespace_dir}"
+    if execute_remote "test -d $namespace_dir > /dev/null 2>&1"
+    then
+        log_msg "REMOTE: Remote namespace directory already exist."
+    else
+        log_msg "REMOTE: Creating remote mount directory '${p_remote_replica_dir}'."
+        log_msg "Creating remote namespace directory '${namespace_dir}'."
+        execute_remote "mkdir -p ${namespace_dir}"
+        execute_remote "chown nfsnobody:nfsnobody ${namespace_dir}"
+    fi    
+
 
     [[ "${p_pvc_replica}" != */ ]] && replica_dir="${p_remote_replica_dir}${p_namespace}/${p_pvc_replica}/"
     [[ "${p_pvc_replica}" == */ ]] && replica_dir="${p_remote_replica_dir}${p_namespace}/${p_pvc_replica}"
 
-    log_msg "Creating remote pvc replica directory '${replica_dir}'."
-    execute_remote "mkdir -p ${replica_dir}"
-    execute_remote "chown nfsnobody:nfsnobody ${replica_dir}"
+    if execute_remote "test -d $replica_dir > /dev/null 2>&1"
+    then
+        log_msg "REMOTE: Remote pvc directory already exist."
+    else
+        log_msg "Creating remote pvc replica directory '${replica_dir}'."
+        execute_remote "mkdir -p ${replica_dir}"
+        execute_remote "chown nfsnobody:nfsnobody ${replica_dir}"
+    fi    
+   
 
     log_msg " ------------------------------------------------"
     log_msg " Start rsync data"
