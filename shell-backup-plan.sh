@@ -137,7 +137,7 @@ synchronize_data () {
     # Mount NFS Endpoint into remote server
     # ---------------------------------------------
     log_msg "Check remote mount directory exist in ${p_remote_replica_dir}."
-    if ssh $HOST stat $p_remote_replica_dir \> /dev/null 2\>\&1
+    if ssh $p_remote_server stat $p_remote_replica_dir \> /dev/null 2\>\&1
     then
             echo "Remote mount directory already exist"
     else
@@ -146,7 +146,7 @@ synchronize_data () {
     fi    
 
     log_msg "Check remote mount point into ${p_remote_replica_dir}."
-    if ssh $HOST mount | grep $p_remote_replica_dir \> /dev/null 2\>\&1
+    if ssh $p_remote_server mount \| grep $p_remote_replica_dir \> /dev/null 2\>\&1
     then
         log_msg "NFS Share already mounted in ${p_remote_replica_dir}."
     else
