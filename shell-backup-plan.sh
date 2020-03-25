@@ -268,7 +268,7 @@ do
 
 	synchronize_data "${p_namespace}" "${p_pvc}" "${p_pv}" "${p_mount_data}" "${p_pvc_replica}"
 	
-done < <(jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.PV) \(.MOUNT_DATA) \(.PVC_REPLICA)"' ${PLAN_FILE})
+done < <(jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.PV) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"' ${PLAN_FILE})
 
 
 log_msg "Exit script with no error."
