@@ -79,7 +79,7 @@ function error_msg() {
 }
  
 function execute_remote() {
-    log_msg ("Executing SSH: '$@' ")
+    log_msg "Executing SSH: '$@' "
     ssh ${p_remote_server} "$@"
 }
 # --------------------------------------
