@@ -139,7 +139,7 @@ synchronize_data () {
     log_msg "Check remote mount directory exist in ${p_remote_replica_dir}."
     if ssh $p_remote_server stat $p_remote_replica_dir \> /dev/null 2\>\&1
     then
-            echo "Remote mount directory already exist"
+            log_msg "Remote mount directory already exist"
     else
             log_msg "Creating remote mount directory '${p_remote_replica_dir}'."
             ssh ${p_remote_server} mkdir -p "${p_remote_replica_dir}"
@@ -150,7 +150,15 @@ synchronize_data () {
     then
         log_msg "NFS Share already mounted in ${p_remote_replica_dir}."
     else
-        echo "Mount point does not exist"
+        log_msg "Mount point does not exist. Creating."
+        log_msg "Check remote mount directory exist in ${p_remote_replica_dir}."
+        if ssh $p_remote_server stat $p_remote_replica_dir \> /dev/null 2\>\&1
+        then
+                log_msg "Remote mount directory already exist"
+        else
+                log_msg "Creating remote mount directory '${p_remote_replica_dir}'."
+                ssh ${p_remote_server} mkdir -p "${p_remote_replica_dir}"
+        fi    
         log_msg "Mounting NFS in '${p_remote_replica_dir}' into remote server"
         ssh ${p_remote_server} mount -t nfs ${p_remote_nfs_endpoint} ${p_remote_replica_dir}
 
@@ -178,9 +186,9 @@ synchronize_data () {
     # Start rsync data    
     # --------------------------
 
-    log_msg "Start NATIVE RSYNC from DIR ${source_dir} of POD ${p_name} from NAMESPACE ${project} into ${replica_dir} with rsync options '${RSYNC_OPTIONS}' ..."
+    log_msg "Start native RSYNC from DIR ${source_dir} of POD ${p_name} from NAMESPACE ${project} into ${replica_dir} with rsync options '${RSYNC_OPTIONS}' ..."
     rsync ${p_rsync_options} ${source_dir} ${p_remote_server}:/${replica_dir}
-    log_msg "NATIVE RSYNC End"
+    log_msg "Native RSYNC finished."
 
     # ---------------------------------------------
     # Umount Gluster Volume localy
@@ -194,8 +202,9 @@ synchronize_data () {
 #     log_msg "Umounting NFS from '${p_remote_replica_dir}' into remote server"
 #     ssh ${p_remote_server} umount ${p_remote_replica_dir} --force
     
-#     log_msg "End of Volume synchronization"
-    return "$E_NOERROR";
+    log_msg "End of Volume synchronization"
+#   return "$E_NOERROR";
+
 }
 
 
@@ -299,13 +308,13 @@ result=( $(cat "$PLAN_FILE" | jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(
 
 while read p_namespace p_pvc p_mount_data p_pvc_replica; do
 
-    echo " ------------------------------------------------"
-    echo " Reading JSON entry ..."
-    echo " ------------------------------------------------"
-	echo " p_namespace=$p_namespace"
-	echo " p_pvc=$p_pvc"
-	echo " p_mount_data=$p_mount_data"
-	echo " p_pvc_replica=$p_pvc_replica"
+    log_msg " ------------------------------------------------"
+    log_msg " Reading JSON entry ..."
+    log_msg " ------------------------------------------------"
+	log_msg " p_namespace=$p_namespace"
+	log_msg " p_pvc=$p_pvc"
+	log_msg " p_mount_data=$p_mount_data"
+	log_msg " p_pvc_replica=$p_pvc_replica"
     if [ -n "$p_namespace" ] && [ -n "$p_pvc" ] && [ -n "$p_mount_data" ] && [ -n "$p_pvc_replica" ]; then
         log_msg "Calling synchronize_data method"
         synchronize_data ${p_namespace} ${p_pvc} ${p_mount_data} ${p_pvc_replica}
@@ -313,7 +322,6 @@ while read p_namespace p_pvc p_mount_data p_pvc_replica; do
         error_msg "ERROR - Some required parameter not speciefied"
     fi
 done < <(jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"' ${PLAN_FILE})
-
 
 log_msg "Exit script with no error."
 exit "${E_NOERROR}"
