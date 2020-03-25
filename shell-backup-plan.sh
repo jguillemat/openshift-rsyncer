@@ -123,8 +123,9 @@ function synchronize_data() {
         mkdir -p "${source_dir}"
     fi
 
-    log_msg "Check local mount point into ${source_dir}."
-    if mount | grep ${p_mount_data} > /dev/null; then
+    mount_dir=${p_mount_data%/}
+    log_msg "Check local mount point into ${mount_dir}."
+    if mount | grep ${mount_dir} > /dev/null; then
          log_msg "GlusterVol already mounted locally"
     else 
         log_msg "Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
@@ -140,8 +141,9 @@ function synchronize_data() {
     log_msg " Mount NFS Endpoint in remote server"
     log_msg " ------------------------------------------------"
 
-    log_msg "REMOTE: Check remote mount point into ${p_remote_replica_dir}."
-    if execute_remote "mount | grep $p_remote_replica_dir > /dev/null 2>&1"
+    remote_mount_dir=${p_remote_replica_dir%/}
+    log_msg "REMOTE: Check remote mount point into ${remote_mount_dir}."
+    if execute_remote "mount | grep $remote_mount_dir > /dev/null 2>&1"
     then
         log_msg "REMOTE: NFS Endpoint already mounted in ${p_remote_replica_dir}."
     else
