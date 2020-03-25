@@ -79,6 +79,7 @@ function error_msg() {
 }
  
 function execute_remote() {
+    log_msg ("Executing SSH: '$@' ")
     ssh ${p_remote_server} "$@"
 }
 # --------------------------------------
@@ -139,7 +140,7 @@ synchronize_data () {
     # Mount NFS Endpoint into remote server
     # ---------------------------------------------
     log_msg "REMOTE: Check remote mount point into ${p_remote_replica_dir}."
-    if execute_remote "mount \| grep $p_remote_replica_dir \> /dev/null 2\>\&1"
+    if execute_remote "mount | grep $p_remote_replica_dir \> /dev/null 2\>\&1"
     then
         log_msg "REMOTE: NFS Endpoint already mounted in ${p_remote_replica_dir}."
     else
@@ -167,7 +168,7 @@ synchronize_data () {
 
     log_msg "Creating remote namespace directory '${namespace_dir}'."
     execute_remote "mkdir -p ${namespace_dir}"
-    execute_remote " chown nfsnobody:nfsnobody ${namespace_dir}"
+    execute_remote "chown nfsnobody:nfsnobody ${namespace_dir}"
 
     [[ "${p_pvc_replica}" != */ ]] && replica_dir="${p_remote_replica_dir}${p_namespace}/${p_pvc_replica}/"
     [[ "${p_pvc_replica}" == */ ]] && replica_dir="${p_remote_replica_dir}${p_namespace}/${p_pvc_replica}"
