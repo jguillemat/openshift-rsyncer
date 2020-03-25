@@ -71,11 +71,11 @@ function is_empty() {
 # --------------------------------------
 #
 function log_msg() {
-		echo "$(date +%Y%m%d%H%M) - $@"
+    echo "$(date +%Y%m%d%H%M) - $@"
 }
 
 function error_msg() {
-		echo "$(date +%Y%m%d%H%M) - $@" 1>&2;
+    echo "$(date +%Y%m%d%H%M) - $@" 1>&2;
 }
  
 function execute_remote() {
@@ -86,7 +86,7 @@ function execute_remote() {
 # SYNCHRONIZE METHOD
 # --------------------------------------
 
-synchronize_data () {
+function synchronize_data() {
 
     log_msg "Entering into synchronize_data ${*} ..."
     local p_namespace="$1"
@@ -140,13 +140,13 @@ synchronize_data () {
     # Mount NFS Endpoint into remote server
     # ---------------------------------------------
     log_msg "REMOTE: Check remote mount point into ${p_remote_replica_dir}."
-    if execute_remote "mount | grep $p_remote_replica_dir \> /dev/null 2\>\&1"
+    if execute_remote "mount | grep $p_remote_replica_dir > /dev/null 2>&1"
     then
         log_msg "REMOTE: NFS Endpoint already mounted in ${p_remote_replica_dir}."
     else
         log_msg "REMOTE: NFS Endpoint isn't mounted. Creating."
         log_msg "REMOTE: Check remote mount directory exist in ${p_remote_replica_dir}."
-        if execute_remote "stat $p_remote_replica_dir \> /dev/null 2\>\&1"
+        if execute_remote "stat $p_remote_replica_dir > /dev/null 2>&1"
         then
                 log_msg "REMOTE: Remote mount directory already exist."
         else
@@ -154,7 +154,7 @@ synchronize_data () {
                 execute_remote "mkdir -p ${p_remote_replica_dir}"
         fi    
         log_msg "REMOTE: Mounting NFS in '${p_remote_replica_dir}' into remote server"
-        execute_remote " mount -t nfs ${p_remote_nfs_endpoint} ${p_remote_replica_dir}"
+        execute_remote "mount -t nfs ${p_remote_nfs_endpoint} ${p_remote_replica_dir}"
 
     fi
 
@@ -181,25 +181,30 @@ synchronize_data () {
     # Start rsync data    
     # --------------------------
 
-    log_msg "Start native RSYNC from DIR ${source_dir} of POD ${p_name} from NAMESPACE ${project} into ${replica_dir} with rsync options '${RSYNC_OPTIONS}' ..."
+    log_msg "Native RSYNC starts from DIR ${source_dir} of POD ${p_name} from NAMESPACE ${project} into ${replica_dir} with rsync options '${RSYNC_OPTIONS}' ..."
     rsync ${p_rsync_options} ${source_dir} ${p_remote_server}:/${replica_dir}
+    if [ $? == 0 ]; then
+        log_msg "rsync exist ok"
+    else
+        error_msg "ERROR - Some error succeded in rsync process"
+    fi
     log_msg "Native RSYNC finished."
 
     # ---------------------------------------------
     # Umount Gluster Volume localy
     # ---------------------------------------------
     # log_msg "Unmounting GlusterVol from '${source_dir}' "
-    # umount ${source_dir} --force
+    umount ${source_dir} --force
 
     # ---------------------------------------------
     # Umount Remote NFS Replica dir
     # ---------------------------------------------
-    log_msg "Umounting NFS from '${p_remote_replica_dir}' into remote server"
+    # log_msg "Umounting NFS from '${p_remote_replica_dir}' into remote server"
     # execute_remote "umount ${p_remote_replica_dir} --force"
     
     log_msg "End of Volume synchronization"
-#   return "$E_NOERROR";
-
+    # return "$E_NOERROR";
+    return 0;
 }
 
 
@@ -299,10 +304,19 @@ fi
 # Process plan data 
 # ------------------------------------------
 log_msg "Starting processing sync plan file ..."
-result=( $(cat "$PLAN_FILE" | jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"') )
 
-while read p_namespace p_pvc p_mount_data p_pvc_replica; do
+# list=$(cat "$PLAN_FILE" | jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE),\(.PVC),\(.GLUSTER_MOUNT_DATA),\(.PVC_REPLICA)"')
+# echo "JSON SOURCE_VOLUMES PARED:"
+# echo "$list"
 
+# ------------------------------------------
+# Process plan entry
+# ------------------------------------------.
+# IFS=","
+# jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE),\(.PVC),\(.GLUSTER_MOUNT_DATA),\(.PVC_REPLICA)"' "$PLAN_FILE" | while read -r p_namespace p_pvc p_mount_data p_pvc_replica
+
+jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"' "$PLAN_FILE" | while read -r p_namespace p_pvc p_mount_data p_pvc_replica
+do
     log_msg " ------------------------------------------------"
     log_msg " Reading JSON entry ..."
     log_msg " ------------------------------------------------"
@@ -310,13 +324,24 @@ while read p_namespace p_pvc p_mount_data p_pvc_replica; do
 	log_msg " p_pvc=$p_pvc"
 	log_msg " p_mount_data=$p_mount_data"
 	log_msg " p_pvc_replica=$p_pvc_replica"
+
     if [ -n "$p_namespace" ] && [ -n "$p_pvc" ] && [ -n "$p_mount_data" ] && [ -n "$p_pvc_replica" ]; then
         log_msg "Calling synchronize_data method"
         synchronize_data ${p_namespace} ${p_pvc} ${p_mount_data} ${p_pvc_replica}
+        if [ $? == 0 ]; then
+            log_msg "synchronize_data exists ok"
+        else
+            error_msg "ERROR - Some error succeded in synchronize_data"
+        fi
     else
         error_msg "ERROR - Some required parameter not speciefied"
     fi
-done < <(jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"' ${PLAN_FILE})
+done
+# done <<< $list
 
+
+# ------------------------------------------
+# Ends
+# ------------------------------------------
 log_msg "Exit script with no error."
 exit "${E_NOERROR}"
