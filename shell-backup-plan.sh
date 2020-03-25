@@ -57,6 +57,26 @@ export PATH
 
 # --------------------------------------
 #
+function read_parameters() {
+
+    linea="$@"
+    IFS=$'\n'; 
+    linea=($linea)
+    unset IFS;
+    echo "$@" | while read -r p_namespace p_pvc p_mount_data p_pvc_replica
+    do
+        log_msg " ------------------------------------------------"
+        log_msg " read_parameters ..."
+        log_msg " ------------------------------------------------"
+        log_msg " p_namespace=$p_namespace"
+        log_msg " p_pvc=$p_pvc"
+        log_msg " p_mount_data=$p_mount_data"
+        log_msg " p_pvc_replica=$p_pvc_replica"
+    done
+}
+
+# --------------------------------------
+#
 function is_empty() {
     local var="${1}"
     local empty=1
@@ -321,39 +341,87 @@ fi
 # ------------------------------------------
 log_msg "Starting processing sync plan file ..."
 
-# list=$(cat "$PLAN_FILE" | jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE),\(.PVC),\(.GLUSTER_MOUNT_DATA),\(.PVC_REPLICA)"')
-# echo "JSON SOURCE_VOLUMES PARED:"
+list=$(cat "$PLAN_FILE" | jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"')
+# echo "JSON SOURCE_VOLUMES PARSED:"
 # echo "$list"
+
+ORIG_IFS=$IFS        # Save the original IFS
+LINE_IFS=$'\n'$'\r'  # For splitting input into lines
+FIELD_IFS=$'\n';     # For splitting lines into fields
+
+IFS=$LINE_IFS
+for line in $list; do
+    echo "LINE=${line}"
+    IFS=$FIELD_IFS
+
+    linea=($line)
+    unset IFS;
+    echo "${line}" | while read -r a b c d
+    do
+        log_msg " ------------------------------------------------"
+        log_msg " read_parameters ..."
+        log_msg " ------------------------------------------------"
+        log_msg " p_namespace=$a"
+        log_msg " p_pvc=$b"
+        log_msg " p_mount_data=$c"
+        log_msg " p_pvc_replica=$d"
+
+        p_namespace=$a
+        p_pvc=$b
+        p_mount_data=$c
+        p_pvc_replica=$d
+        
+        echo "p_namespace=$p_namespace"
+        echo "p_pvc=$p_pvc"
+        echo "p_mount_data=$p_mount_data"
+        echo "p_pvc_replica=$p_pvc_replica"
+
+
+        if [ -n "$p_namespace" ] && [ -n "$p_pvc" ] && [ -n "$p_mount_data" ] && [ -n "$p_pvc_replica" ]; then
+            log_msg "Calling synchronize_data method"
+            synchronize_data ${p_namespace} ${p_pvc} ${p_mount_data} ${p_pvc_replica}
+            if [ $? == 0 ]; then
+                log_msg "synchronize_data exists ok"
+            else
+                error_msg "ERROR - Some error succeded in synchronize_data"
+            fi
+        else
+            error_msg "ERROR - Some required parameter not speciefied"
+        fi
+        
+    done
+    IFS=$LINE_IFS
+done
+IFS=$ORIG_IFS
 
 # ------------------------------------------
 # Process plan entry
 # ------------------------------------------.
-# IFS=","
-# jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE),\(.PVC),\(.GLUSTER_MOUNT_DATA),\(.PVC_REPLICA)"' "$PLAN_FILE" | while read -r p_namespace p_pvc p_mount_data p_pvc_replica
-
-jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"' "$PLAN_FILE" | while read -r p_namespace p_pvc p_mount_data p_pvc_replica
-do
-    log_msg " ------------------------------------------------"
-    log_msg " Reading JSON entry ..."
-    log_msg " ------------------------------------------------"
-	log_msg " p_namespace=$p_namespace"
-	log_msg " p_pvc=$p_pvc"
-	log_msg " p_mount_data=$p_mount_data"
-	log_msg " p_pvc_replica=$p_pvc_replica"
-
-    if [ -n "$p_namespace" ] && [ -n "$p_pvc" ] && [ -n "$p_mount_data" ] && [ -n "$p_pvc_replica" ]; then
-        log_msg "Calling synchronize_data method"
-        synchronize_data ${p_namespace} ${p_pvc} ${p_mount_data} ${p_pvc_replica}
-        if [ $? == 0 ]; then
-            log_msg "synchronize_data exists ok"
-        else
-            error_msg "ERROR - Some error succeded in synchronize_data"
-        fi
-    else
-        error_msg "ERROR - Some required parameter not speciefied"
-    fi
-done
-# done <<< $list
+# IFS=
+# jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"' "$PLAN_FILE" | while read -r p_namespace p_pvc p_mount_data p_pvc_replica
+# do
+#  
+#     log_msg " ------------------------------------------------"
+#     log_msg " Reading JSON entry ..."
+#     log_msg " ------------------------------------------------"
+#  
+#     log_msg " p_namespace=$p_namespace"
+#     log_msg " p_pvc=$p_pvc"
+#     log_msg " p_mount_data=$p_mount_data"
+#     log_msg " p_pvc_replica=$p_pvc_replica"
+#  
+#     if [ -n "$p_namespace" ] && [ -n "$p_pvc" ] && [ -n "$p_mount_data" ] && [ -n "$p_pvc_replica" ]; then
+#         log_msg "Calling synchronize_data method"
+#         synchronize_data ${p_namespace} ${p_pvc} ${p_mount_data} ${p_pvc_replica}
+#         if [ $? == 0 ]; then
+#             log_msg "synchronize_data exists ok"
+#         else
+#             error_msg "ERROR - Some error succeded in synchronize_data"
+#         fi
+#     else
+#         error_msg "ERROR - Some required parameter not speciefied"
+#     fi
+# done
 
 
 # ------------------------------------------
