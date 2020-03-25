@@ -146,7 +146,7 @@ function synchronize_data() {
     else
         log_msg "REMOTE: NFS Endpoint isn't mounted. Creating."
         log_msg "REMOTE: Check remote mount directory exist in ${p_remote_replica_dir}."
-        if execute_remote "stat $p_remote_replica_dir > /dev/null 2>&1"
+        if execute_remote "test -d $p_remote_replica_dir > /dev/null 2>&1"
         then
                 log_msg "REMOTE: Remote mount directory already exist."
         else
