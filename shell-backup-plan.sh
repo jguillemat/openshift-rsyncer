@@ -42,8 +42,8 @@
 readonly E_NOSYNCPLAN=255         # CANNOT GET SYNC PLAN FILE
 readonly E_SYNCPLAN_EMPTY=254     # CANNOT GET SYNC PLAN DATA
 readonly E_NONAMESPACE=253         # CANNOT GET NAMESPACE
-readonly E_NOPODNAME=252          # CANNOT GET POD NAME
-readonly E_NOVOLUME=251           # POD_VOLUME not specified
+readonly E_CANNOT_MOUNT_GLUSTER=252 # CANNOT MOUNT GLUSTERVOL INTO LOCAL DIR
+readonly E_CANNOT_MOUNT_REMOTE=251   # CANNOT MOUNT REMOTE NFS ENDPOINT
 readonly E_NOERROR=0              # ALL IT'S OK
 
 # Configure rsync into PATH
@@ -57,7 +57,7 @@ export PATH
 
 # --------------------------------------
 #
-is_empty() {
+function is_empty() {
     local var="${1}"
     local empty=1
 
@@ -70,11 +70,11 @@ is_empty() {
 
 # --------------------------------------
 #
-log_msg() {
+function log_msg() {
 		echo "$(date +%Y%m%d%H%M) - $@"
 }
 
-error_msg() {
+function error_msg() {
 		echo "$(date +%Y%m%d%H%M) - $@" 1>&2;
 }
  
@@ -96,35 +96,65 @@ synchronize_data () {
 	echo " p_pvc_replica=$p_pvc_replica"   
 
            
-    log_msg "Checking Namespace '${p_selector}' ..."
+    log_msg "Checking Namespace '${p_namespace}' ..."
     if [[ "${p_namespace}" == "" ]]; then
         error_msg "ERROR: NAMESPACE not specified. Exit."
         return "${E_NONAMESPACE}"
     fi        
         
-    # --------------------------
-    # Mount PVC locally
-    # --------------------------
+    # ---------------------------------------------
+    # Mount PVC locally via Gluster
+    # ---------------------------------------------
+
     # Check final slash
     local source_dir=""
     [[ "${p_local_data_dir}" != */ ]] && p_local_data_dir="${p_local_data_dir}/"
     [[ "${p_pvc}" != */ ]] && source_dir="${p_local_data_dir}${p_namespace}/${p_pvc}/"
     [[ "${p_pvc}" == */ ]] && source_dir="${p_local_data_dir}${p_namespace}/${p_pvc}"
-    
-    log_msg "Creating local directory ${source_dir}."
-    mkdir -p "${source_dir}"
 
-    log_msg "Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
-    mount -t glusterfs ${p_mount_data} ${source_dir}
+    log_msg "Check local directory ${source_dir}."
+    if [ -d "$source_dir" ]; then
+        log_msg "Local directory ${source_dir} exist."
+    else 
+        log_msg "Creating local directory ${source_dir}."
+        mkdir -p "${source_dir}"
+    fi
+
+    log_msg "Check local mount point into ${source_dir}."
+    if mount | grep ${p_mount_data} > /dev/null; then
+         log_msg "GlusterVol already mounted locally"
+    else 
+        log_msg "Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
+        if mount -t glusterfs ${p_mount_data} ${source_dir}   > /dev/null; then
+            log_msg "GlusterVol mounted locally"
+        else 
+            error_msg "ERROR Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
+            return "${E_CANNOT_MOUNT_GLUSTER}"
+        fi
+    fi
 
     # ---------------------------------------------
     # Mount NFS Endpoint into remote server
     # ---------------------------------------------
-    log_msg "Creating remote mount directory '${p_remote_replica_dir}'."
-    ssh ${p_remote_server} mkdir -p "${p_remote_replica_dir}"
+    log_msg "Check remote mount directory exist in ${p_remote_replica_dir}."
+    if ssh $HOST stat $p_remote_replica_dir \> /dev/null 2\>\&1
+    then
+            echo "Remote mount directory already exist"
+    else
+            log_msg "Creating remote mount directory '${p_remote_replica_dir}'."
+            ssh ${p_remote_server} mkdir -p "${p_remote_replica_dir}"
+    fi    
 
-    log_msg "Mounting NFS in '${p_remote_replica_dir}' into remote server"
-    ssh ${p_remote_server} mount -t nfs ${p_remote_nfs_endpoint} ${p_remote_replica_dir}
+    log_msg "Check remote mount point into ${p_remote_replica_dir}."
+    if ssh $HOST mount | grep $p_remote_replica_dir \> /dev/null 2\>\&1
+    then
+        log_msg "NFS Share already mounted in ${p_remote_replica_dir}."
+    else
+        echo "Mount point does not exist"
+        log_msg "Mounting NFS in '${p_remote_replica_dir}' into remote server"
+        ssh ${p_remote_server} mount -t nfs ${p_remote_nfs_endpoint} ${p_remote_replica_dir}
+
+    fi
 
     # -----------------------------------------------------------------
     # Create (if no exist) replica directory into remote server
@@ -165,6 +195,7 @@ synchronize_data () {
 #     ssh ${p_remote_server} umount ${p_remote_replica_dir} --force
     
 #     log_msg "End of Volume synchronization"
+    return "$E_NOERROR";
 }
 
 
@@ -264,8 +295,10 @@ fi
 # Process plan data 
 # ------------------------------------------
 log_msg "Starting processing sync plan file ..."
-while read p_namespace p_pvc p_mount_data p_pvc_replica; 
-do
+result=( $(cat "$PLAN_FILE" | jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"') )
+
+while read p_namespace p_pvc p_mount_data p_pvc_replica; do
+
     echo " ------------------------------------------------"
     echo " Reading JSON entry ..."
     echo " ------------------------------------------------"
@@ -273,9 +306,12 @@ do
 	echo " p_pvc=$p_pvc"
 	echo " p_mount_data=$p_mount_data"
 	echo " p_pvc_replica=$p_pvc_replica"
-
-	synchronize_data "${p_namespace}" "${p_pvc}" "${p_mount_data}" "${p_pvc_replica}"
-	
+    if [ -n "$p_namespace" ] && [ -n "$p_pvc" ] && [ -n "$p_mount_data" ] && [ -n "$p_pvc_replica" ]; then
+        log_msg "Calling synchronize_data method"
+        synchronize_data ${p_namespace} ${p_pvc} ${p_mount_data} ${p_pvc_replica}
+    else
+        error_msg "ERROR - Some required parameter not speciefied"
+    fi
 done < <(jq -r '.SOURCE_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"' ${PLAN_FILE})
 
 
