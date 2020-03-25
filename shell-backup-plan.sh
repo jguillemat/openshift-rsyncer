@@ -79,7 +79,7 @@ function error_msg() {
 }
  
 function execute_remote() {
-    log_msg "Executing SSH: '$@' "
+    # log_msg "Executing SSH: '$@' "
     ssh ${p_remote_server} "$@"
 }
 # --------------------------------------
@@ -151,10 +151,10 @@ function synchronize_data() {
         log_msg "REMOTE: Check remote mount directory exist in ${p_remote_replica_dir}."
         if execute_remote "test -d $p_remote_replica_dir > /dev/null 2>&1"
         then
-                log_msg "REMOTE: Remote mount directory already exist."
+            log_msg "REMOTE: Remote mount directory already exist."
         else
-                log_msg "REMOTE: Creating remote mount directory '${p_remote_replica_dir}'."
-                execute_remote "mkdir -p ${p_remote_replica_dir}"
+            log_msg "REMOTE: Creating remote mount directory '${p_remote_replica_dir}'."
+            execute_remote "mkdir -p ${p_remote_replica_dir}"
         fi    
         log_msg "REMOTE: Mounting NFS in '${p_remote_replica_dir}' into remote server"
         execute_remote "mount -t nfs ${p_remote_nfs_endpoint} ${p_remote_replica_dir}"
