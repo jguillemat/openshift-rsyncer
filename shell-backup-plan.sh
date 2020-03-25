@@ -78,6 +78,9 @@ function error_msg() {
 		echo "$(date +%Y%m%d%H%M) - $@" 1>&2;
 }
  
+function execute_remote() {
+    ssh ${p_remote_server} "$@"
+}
 # --------------------------------------
 # SYNCHRONIZE METHOD
 # --------------------------------------
@@ -90,12 +93,11 @@ synchronize_data () {
     local p_mount_data="$3"
     local p_pvc_replica="$4"
 
-	echo " p_namespace=$p_namespace"
-	echo " p_pvc=$p_pvc"
-	echo " p_mount_data=$p_mount_data"
-	echo " p_pvc_replica=$p_pvc_replica"   
+	# echo " p_namespace=$p_namespace"
+	# echo " p_pvc=$p_pvc"
+	# echo " p_mount_data=$p_mount_data"
+	# echo " p_pvc_replica=$p_pvc_replica"   
 
-           
     log_msg "Checking Namespace '${p_namespace}' ..."
     if [[ "${p_namespace}" == "" ]]; then
         error_msg "ERROR: NAMESPACE not specified. Exit."
@@ -129,58 +131,50 @@ synchronize_data () {
             log_msg "GlusterVol mounted locally"
         else 
             error_msg "ERROR Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
-            return "${E_CANNOT_MOUNT_GLUSTER}"
+            # return "${E_CANNOT_MOUNT_GLUSTER}"
         fi
     fi
 
     # ---------------------------------------------
     # Mount NFS Endpoint into remote server
     # ---------------------------------------------
-    log_msg "Check remote mount directory exist in ${p_remote_replica_dir}."
-    if ssh $p_remote_server stat $p_remote_replica_dir \> /dev/null 2\>\&1
+    log_msg "REMOTE: Check remote mount point into ${p_remote_replica_dir}."
+    if execute_remote "mount \| grep $p_remote_replica_dir \> /dev/null 2\>\&1"
     then
-            log_msg "Remote mount directory already exist"
+        log_msg "REMOTE: NFS Endpoint already mounted in ${p_remote_replica_dir}."
     else
-            log_msg "Creating remote mount directory '${p_remote_replica_dir}'."
-            ssh ${p_remote_server} mkdir -p "${p_remote_replica_dir}"
-    fi    
-
-    log_msg "Check remote mount point into ${p_remote_replica_dir}."
-    if ssh $p_remote_server mount \| grep $p_remote_replica_dir \> /dev/null 2\>\&1
-    then
-        log_msg "NFS Share already mounted in ${p_remote_replica_dir}."
-    else
-        log_msg "Mount point does not exist. Creating."
-        log_msg "Check remote mount directory exist in ${p_remote_replica_dir}."
-        if ssh $p_remote_server stat $p_remote_replica_dir \> /dev/null 2\>\&1
+        log_msg "REMOTE: NFS Endpoint isn't mounted. Creating."
+        log_msg "REMOTE: Check remote mount directory exist in ${p_remote_replica_dir}."
+        if execute_remote "stat $p_remote_replica_dir \> /dev/null 2\>\&1"
         then
-                log_msg "Remote mount directory already exist"
+                log_msg "REMOTE: Remote mount directory already exist."
         else
-                log_msg "Creating remote mount directory '${p_remote_replica_dir}'."
-                ssh ${p_remote_server} mkdir -p "${p_remote_replica_dir}"
+                log_msg "REMOTE: Creating remote mount directory '${p_remote_replica_dir}'."
+                execute_remote "mkdir -p ${p_remote_replica_dir}"
         fi    
-        log_msg "Mounting NFS in '${p_remote_replica_dir}' into remote server"
-        ssh ${p_remote_server} mount -t nfs ${p_remote_nfs_endpoint} ${p_remote_replica_dir}
+        log_msg "REMOTE: Mounting NFS in '${p_remote_replica_dir}' into remote server"
+        execute_remote " mount -t nfs ${p_remote_nfs_endpoint} ${p_remote_replica_dir}"
 
     fi
 
     # -----------------------------------------------------------------
     # Create (if no exist) replica directory into remote server
     # -----------------------------------------------------------------
+
     local replica_dir=""
     [[ "${p_remote_replica_dir}" != */ ]] && p_remote_replica_dir="${p_remote_replica_dir}/"
     namespace_dir="${p_remote_replica_dir}${p_namespace}/"
 
     log_msg "Creating remote namespace directory '${namespace_dir}'."
-    ssh ${p_remote_server} mkdir -p "${namespace_dir}"
-    ssh ${p_remote_server} chown nfsnobody:nfsnobody "${namespace_dir}"
+    execute_remote "mkdir -p ${namespace_dir}"
+    execute_remote " chown nfsnobody:nfsnobody ${namespace_dir}"
 
     [[ "${p_pvc_replica}" != */ ]] && replica_dir="${p_remote_replica_dir}${p_namespace}/${p_pvc_replica}/"
     [[ "${p_pvc_replica}" == */ ]] && replica_dir="${p_remote_replica_dir}${p_namespace}/${p_pvc_replica}"
 
     log_msg "Creating remote pvc replica directory '${replica_dir}'."
-    ssh ${p_remote_server} mkdir -p "${replica_dir}"
-    ssh ${p_remote_server} chown nfsnobody:nfsnobody "${replica_dir}"
+    execute_remote "mkdir -p ${replica_dir}"
+    execute_remote "chown nfsnobody:nfsnobody ${replica_dir}"
 
     # --------------------------
     # Start rsync data    
@@ -199,8 +193,8 @@ synchronize_data () {
     # ---------------------------------------------
     # Umount Remote NFS Replica dir
     # ---------------------------------------------
-#     log_msg "Umounting NFS from '${p_remote_replica_dir}' into remote server"
-#     ssh ${p_remote_server} umount ${p_remote_replica_dir} --force
+    log_msg "Umounting NFS from '${p_remote_replica_dir}' into remote server"
+    # execute_remote "umount ${p_remote_replica_dir} --force"
     
     log_msg "End of Volume synchronization"
 #   return "$E_NOERROR";
