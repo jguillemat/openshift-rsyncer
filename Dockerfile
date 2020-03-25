@@ -39,5 +39,5 @@ RUN \
 USER root
 
 WORKDIR $SCRIPTS_HOME
-ENTRYPOINT ["/bin/bash", "backup.sh"]
+ENTRYPOINT ["/bin/bash", "oc-backup.sh"]
 
