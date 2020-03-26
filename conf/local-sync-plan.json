@@ -33,7 +33,7 @@
         "NAMESPACE": "azurebackup",
         "PVC": "azure-backup2",
         "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_2c5364d631c32ec49df5808dd1ca14d7",
-        "PVC_REPLICA": "azure-backup2"
+        "PVC_REPLICA": "azure-backup2-replica"
     } , {
         "NAMESPACE": "lati-lau",
         "PVC": "campus-etl-pvc2",
