@@ -6,14 +6,29 @@
         "PVC_REPLICA": "replica-pvc"
     } , {
         "NAMESPACE": "ci",
-        "PVC": "jenkinsdevops",
-        "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_3c0baac9eda5ad8664616ff2090c5a02",
-        "PVC_REPLICA": "jenkinsdevops-replica"
+        "PVC": "grafana-pvc",
+        "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_ca53cca99486143c3184ebe762fac518",
+        "PVC_REPLICA": "grafana-pvc-replica"
+    } , {
+        "NAMESPACE": "ci",
+        "PVC": "jenkinsdevops-config-pro",
+        "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_dd91c902f8b7f5e07505848843c31f99",
+        "PVC_REPLICA": "jenkinsdevops-config-pro-replica"
+    } , {
+        "NAMESPACE": "ci",
+        "PVC": "jenkinsdevops2",
+        "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_ee637e80e972894e2047a7befbb764c8",
+        "PVC_REPLICA": "jenkinsdevops2-replica"
     } , {
         "NAMESPACE": "ci",
         "PVC": "maven-uoc-slave-pvc",
         "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_050b256b9a1162288eebcc12b3406168",
         "PVC_REPLICA": "maven-uoc-slave-pvc-replica"
+    } , {
+        "NAMESPACE": "ci",
+        "PVC": "shared-workspace-zap",
+        "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_881332a9b7519d11b887940f9dcb8288",
+        "PVC_REPLICA": "shared-workspace-zap-replica"
     } , {
         "NAMESPACE": "teslauoc",
         "PVC": "app-glusterfs",
