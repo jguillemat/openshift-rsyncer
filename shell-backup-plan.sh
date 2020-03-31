@@ -258,7 +258,7 @@ LOG_DIR="${LOGS_PATH}"
 if [[ "${LOG_DIR}" == "" ]]; then
     LOG_DIR="./logs"
 fi
-LOG_FILE="${LOG_DIR}/syncrhonization_execution_$(date +%Y%m%d%H%M).log"
+LOG_FILE="${LOG_DIR}/synchronize_data_execution_$(date +%Y%m%d%H%M).log"
 
 # init log file
 > $LOG_FILE
