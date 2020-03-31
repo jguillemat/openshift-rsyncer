@@ -39,6 +39,7 @@ readonly E_NONAMESPACE=253         # CANNOT GET NAMESPACE
 readonly E_CANNOT_MOUNT_GLUSTER=252 # CANNOT MOUNT GLUSTERVOL INTO LOCAL DIR
 readonly E_CANNOT_MOUNT_REMOTE=251   # CANNOT MOUNT REMOTE NFS ENDPOINT
 readonly E_NOSSH_CONNECTION=250     # Cannot establish a SSH connection
+readonly E_RSYNC_ERROR=249     # Cannot establish a SSH connection
 readonly E_NOERROR=0              # ALL IT'S OK
 
 # Configure rsync into PATH
@@ -54,8 +55,8 @@ g_rsync_options="-auvz"
 g_local_data_dir="/mnt/test-glusterfs"
 g_remote_replica_dir="/mnt/test-nfs"
 MAIL_RELAY="smpt.uoc.edu"
-MAIL_FROM="jguillemat@essiprojets.com"
-MAIL_DEST="jguillemat@essiprojets.com"
+MAIL_FROM=""
+MAIL_DEST=""
 
 # --------------------------------------
 # FUNCTIONS
@@ -75,6 +76,13 @@ function error_msg() {
     echo -e "$(date +%Y%m%d%H%M) - $@" >> $LOG_FILE
 }
 
+function end_process() 
+{
+    local error_code="${1}"
+    send_mail()
+    exit "${error_code}"
+}
+
 function send_mail() {
 
     sed "1iSubject: ($g_result_code) Syncrhonize PVC Openshift Castelldefels to Nexica\
@@ -92,9 +100,9 @@ function check_ssh_session() {
         return "0";
     else
         error_msg "ERROR - Some error succeded in ssh process"
-        return "$E_NOSSH_CONNECTION"
+        end_process "$E_NOSSH_CONNECTION"
     fi
-     return "0";
+    return "0";
 }
 
 function execute_remote() {
@@ -115,7 +123,7 @@ function synchronize_data() {
  
     log_msg "Checking Namespace '${p_namespace}' ..."
     if [[ "${p_namespace}" == "" ]]; then
-        error_msg "ERROR: NAMESPACE not specified. Exit."
+        error_msg "ERROR: NAMESPACE not specified. Exiting method."
         return "${E_NONAMESPACE}"
     fi        
         
@@ -146,7 +154,7 @@ function synchronize_data() {
         if mount -t glusterfs ${p_mount_data} ${source_dir} -o ro  > /dev/null; then
             log_msg "GlusterVol mounted locally"
         else 
-            error_msg "ERROR Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
+            error_msg "ERROR Mounting GlusterVol '${p_mount_data}' into '${source_dir}'. Exiting method"
             return "${E_CANNOT_MOUNT_GLUSTER}"
         fi
     fi
@@ -175,8 +183,8 @@ function synchronize_data() {
         then
             log_msg "REMOTE: Remote mount directory mounted successfully."
         else
-            error_msg "REMOTE: ERROR Mounting NFS '${p_remote_nfs_endpoint}' into '${sourp_remote_nfs_endpointce_dir}' "
-            return "${REMOTE}"
+            error_msg "REMOTE: ERROR Mounting NFS '${p_remote_nfs_endpoint}' into '${sourp_remote_nfs_endpointce_dir}'. Exiting method"
+            return "${E_CANNOT_MOUNT_REMOTE}"
         fi 
     fi
 
@@ -218,6 +226,7 @@ function synchronize_data() {
         log_msg "Native RSYNC finished successfully"
     else
         error_msg "ERROR - Some error succeded in rsync process"
+        return "${E_RSYNC_ERROR}"
     fi
  
     # ---------------------------------------------
@@ -233,8 +242,7 @@ function synchronize_data() {
     # execute_remote "umount ${g_remote_replica_dir} --force"
     
     log_msg "End of Volume synchronization"
-    # return "$E_NOERROR";
-    return 0;
+    return "$E_NOERROR";
 }
 
 ## ------------------------------------------ ##
@@ -275,11 +283,11 @@ PLAN_FILE="${PLAN_DIR}/local-sync-plan.json"
 
 if [[ ! -e "$PLAN_FILE" ]]; then
     error_msg "ERROR - Sync plan file doesn't exist '${PLAN_FILE}' "
-    exit "${E_NOSYNCPLAN}" 
+    end_process "${E_NOSYNCPLAN}" 
 fi
 if [[ ! -s "$PLAN_FILE" ]]; then
     error_msg "ERROR - Not sync plan data into '${PLAN_FILE}' "
-    exit "${E_SYNCPLAN_EMPTY}" 
+    end_process "${E_SYNCPLAN_EMPTY}" 
 fi
 log_msg "Getted PLAN_FILE = '${PLAN_FILE}'."
 
@@ -291,8 +299,9 @@ g_ssh_server="${SSH_SERVER}"
 log_msg "Checking SSH_SERVER ${g_ssh_server}..."
 if [[ "${g_ssh_server}" == "" ]]; then
     g_ssh_server="$( jq -r '.CONFIGURATION.SSH_SERVER' ${PLAN_FILE} )"
-    log_msg "Readed SSH_SERVER '${g_ssh_server}'"
 fi
+log_msg "Readed SSH_SERVER '${g_ssh_server}'"
+
 
 # ------------------------------------------
 # Get SSH_OPTIONS option
@@ -312,7 +321,7 @@ then
     log_msg "SSH connection available"
 else
     error_msg "ERROR - SSH connection no available"
-    exit "${E_NOSSH_CONNECTION}" 
+    end_process "${E_NOSSH_CONNECTION}"
 fi
 
 # ------------------------------------------
@@ -320,44 +329,61 @@ fi
 # ------------------------------------------
 log_msg "Reading REMOTE_NFS_ENDPOINT parameter ..."
 p_remote_nfs_endpoint="${REMOTE_NFS_ENDPOINT}"
-log_msg "Checking REMOTE_NFS_ENDPOINT ${p_remote_nfs_endpoint}..."
 if [[ "${p_remote_nfs_endpoint}" == "" ]]; then
     p_remote_nfs_endpoint="$( jq -r '.CONFIGURATION.REMOTE_NFS_ENDPOINT' ${PLAN_FILE} )"
-    error_msg "Readed REMOTE_NFS_ENDPOINT '${p_remote_nfs_endpoint}'"
 fi
+log_msg "Readed REMOTE_NFS_ENDPOINT '${p_remote_nfs_endpoint}'"
 
 # ------------------------------------------
 # Get REMOTE_REPLICA_DIR option
 # ------------------------------------------
 log_msg "Reading REMOTE_REPLICA_DIR parameter ..."
 g_remote_replica_dir="${REMOTE_REPLICA_DIR}"
-log_msg "Checking REMOTE_REPLICA_DIR ${g_remote_replica_dir}..."
 if [[ "${g_remote_replica_dir}" == "" ]]; then
     g_remote_replica_dir="$( jq -r '.CONFIGURATION.REMOTE_REPLICA_DIR' ${PLAN_FILE} )"
-    log_msg "Readed REMOTE_REPLICA_DIR '${g_remote_replica_dir}'"
 fi
+log_msg "Readed REMOTE_REPLICA_DIR '${g_remote_replica_dir}'"
 
 # ------------------------------------------
 # Get LOCAL_DATA_DIR option
 # ------------------------------------------
 log_msg "Reading LOCAL_DATA_DIR parameter ..."
 g_local_data_dir="${LOCAL_DATA_DIR}"
-log_msg "Checking LOCAL_DATA_DIR ${g_local_data_dir}..."
 if [[ "${g_local_data_dir}" == "" ]]; then
     g_local_data_dir="$( jq -r '.CONFIGURATION.LOCAL_DATA_DIR' ${PLAN_FILE} )"
-    log_msg "Readed LOCAL_DATA_DIR '${g_local_data_dir}'"
 fi
+log_msg "Readed LOCAL_DATA_DIR '${g_local_data_dir}'"
  
 # ------------------------------------------
 # Get RSYNC option
 # ------------------------------------------
 log_msg "Reading RSYNC_OPTIONS parameter ..."
 g_rsync_options="${RSYNC_OPTIONS}"
-log_msg "Checking RSYNC_OPTIONS ${g_rsync_options}..."
 if [[ "${g_rsync_options}" == "" ]]; then
     g_rsync_options="$( jq -r '.CONFIGURATION.RSYNC_OPTIONS' ${PLAN_FILE} )"
-    log_msg "Readed RSYNC_OPTIONS '${g_rsync_options}'"
-fi        
+fi
+log_msg "Readed RSYNC_OPTIONS '${g_rsync_options}'"
+
+ 
+# ------------------------------------------
+# Get MAIL PARAMETERS
+# ------------------------------------------
+g_mail_server="${MAIL_RELAY}"
+if [[ "${g_mail_server}" == "" ]]; then
+    g_mail_server="$( jq -r '.CONFIGURATION.MAIL_RELAY' ${PLAN_FILE} )"
+fi
+log_msg "Readed MAIL_RELAY: '${g_mail_server}'"
+g_mail_from="${MAIL_FROM}"
+if [[ "${g_mail_from}" == "" ]]; then
+    g_mail_from="$( jq -r '.CONFIGURATION.MAIL_FROM' ${PLAN_FILE} )"
+fi
+log_msg "Readed MAIL_FROM: '${g_mail_from}'"
+g_mail_dest="${MAIL_DEST}"
+if [[ "${g_mail_dest}" == "" ]]; then
+    g_mail_dest="$( jq -r '.CONFIGURATION.MAIL_DEST' ${PLAN_FILE} )"
+fi
+log_msg "Readed MAIL_DEST: '${g_mail_dest}'"
+
 
 # ------------------------------------------
 # Process plan data 
@@ -371,7 +397,7 @@ LINE_IFS=$'\n'$'\r'  # For splitting input into lines
 FIELD_IFS=$'\n';     # For splitting lines into fields
 IFS=$LINE_IFS
 for line in $list; do
-    echo " Processed LINE=${line}"
+    echo " Processing LINE=${line}"
     IFS=$FIELD_IFS
 
     linea=($line)
@@ -400,10 +426,10 @@ for line in $list; do
             if [ $? == 0 ]; then
                 log_msg "synchronize_data exists ok"
             else
-                error_msg "ERROR - Some error succeded in synchronize_data"
+                error_msg "ERROR - Some error succeded in synchronize_data (LINE: ${line} )"
             fi
         else
-            error_msg "ERROR - Some required parameter not speciefied"
+            error_msg "ERROR - Some required parameter not speciefied (LINE: ${line} )"
         fi
         
     done

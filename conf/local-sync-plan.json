@@ -5,7 +5,10 @@
         "REMOTE_REPLICA_DIR": "/mnt/test-nfs/",
         "RSYNC_OPTIONS": "-auvz --delete-after",
         "SSH_OPTIONS": "-o ConnectTimeout=10",
-        "SSH_SERVER": "root@ocp-nexica-bastion.uoc.es"
+        "SSH_SERVER": "root@ocp-nexica-bastion.uoc.es",
+        "MAIL_RELAY": "smpt.uoc.edu",
+        "MAIL_FROM": "jguillemat@essiprojects.com",
+        "MAIL_DEST" : "jguillemat@essiprojects.com"
     },
     "SOURCE_VOLUMES": [
         {
