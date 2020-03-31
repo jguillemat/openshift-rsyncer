@@ -48,11 +48,14 @@ export PATH
 # --------------------------------------
 # GLOBAL VARIABLES with DEFAULTS
 # --------------------------------------
+g_result_code=OK
 g_ssh_server=""
 g_rsync_options="-auvz"
 g_local_data_dir="/mnt/test-glusterfs"
 g_remote_replica_dir="/mnt/test-nfs"
-
+MAIL_RELAY=""
+MAIL_FROM=""
+MAIL_DEST=""
 
 # --------------------------------------
 # FUNCTIONS
@@ -66,10 +69,19 @@ function log_msg() {
 }
 
 function error_msg() {
+    g_result_code=ERROR
+
     echo "$(date +%Y%m%d%H%M) - $@" 1>&2;
     echo -e "$(date +%Y%m%d%H%M) - $@" >> $LOG_FILE
 }
 
+function send_mail() {
+
+    sed "1iSubject: ($g_result_code) Syncrhonize PVC Openshift Castelldefels to Nexica\
+    \nTo: <$MAIL_DEST>\
+    \nFrom: Backups BD <$MAIL_FROM>\
+    \n" $LOG_FILE | msmtp --host=$MAIL_RELAY --from=$MAIL_FROM $MAIL_DEST
+}
 # --------------------------------------
 #
 function check_ssh_session() {
@@ -242,7 +254,9 @@ if [[ "${LOG_DIR}" == "" ]]; then
     LOG_DIR="./logs"
 fi
 LOG_FILE="${LOG_DIR}/syncrhonization_execution_$(date +%Y%m%d%H%M).log"
-touch $LOG_FILE
+
+# init log file
+> $LOG_FILE
 
 # ------------------------------------------
 # Check sync plan file 
@@ -396,7 +410,13 @@ for line in $list; do
     IFS=$LINE_IFS
 done
 IFS=$ORIG_IFS
- 
+
+# ------------------------------------------
+# Sends Mail
+# ------------------------------------------
+# log_msg "Sending Mail"
+# send_mail()
+
 # ------------------------------------------
 # Ends
 # ------------------------------------------
