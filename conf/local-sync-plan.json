@@ -3,7 +3,7 @@
         "LOCAL_DATA_DIR": "/mnt/test-glusterfs/",
         "REMOTE_NFS_ENDPOINT": "vdm-oscont.uoc.es:/PRO_openshift_repo/",
         "REMOTE_REPLICA_DIR": "/mnt/test-nfs/",
-        "RSYNC_OPTIONS": "-auvz -delete-after",
+        "RSYNC_OPTIONS": "-auvz --delete-after",
         "SSH_OPTIONS": "-o ConnectTimeout=10",
         "SSH_SERVER": "root@ocp-nexica-bastion.uoc.es"
     },

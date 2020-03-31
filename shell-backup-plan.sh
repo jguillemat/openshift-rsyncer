@@ -202,7 +202,7 @@ function synchronize_data() {
     log_msg " Start rsync data"
     log_msg " ------------------------------------------------"
 
-    log_msg "Native RSYNC starts for PV '${p_pvc}' from DIR '${source_dir}' from NAMESPACE ${p_namespace} into ${replica_dir} with rsync options '${p_rsync_options}' ..."
+    log_msg "Native RSYNC starts for PVC '${p_pvc}' from DIR '${source_dir}' from NAMESPACE ${p_namespace}' into '${replica_dir}' with rsync options '${p_rsync_options}' ..."
     rsync ${p_rsync_options} ${source_dir} ${p_ssh_server}:/${replica_dir}
     if [ $? == 0 ]; then
         log_msg "Native RSYNC finished successfully"
