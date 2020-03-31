@@ -3,7 +3,7 @@
         "LOCAL_DATA_DIR": "/mnt/test-glusterfs/",
         "REMOTE_NFS_ENDPOINT": "vdm-oscont.uoc.es:/PRO_openshift_repo/",
         "REMOTE_REPLICA_DIR": "/mnt/test-nfs/",
-        "RSYNC_OPTIONS": "-auvz --delete-after",
+        "RSYNC_OPTIONS": "-auvz --delete-after",192.168.195.101:gluster-registry-volume
         "SSH_OPTIONS": "-o ConnectTimeout=10",
         "SSH_SERVER": "root@ocp-nexica-bastion.uoc.es"
     },
@@ -15,7 +15,7 @@
             "PVC_REPLICA": "replica-pvc"
         },
         {
-            "GLUSTER_MOUNT_DATA": "192.168.195.105:gluster-registry-volume",
+            "GLUSTER_MOUNT_DATA": "192.168.195.101:gluster-registry-volume",
             "NAMESPACE": "default",
             "PVC": "gluster-registry-claim",
             "PVC_REPLICA": "registry-volume-replica"

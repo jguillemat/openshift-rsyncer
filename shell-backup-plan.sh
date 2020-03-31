@@ -48,8 +48,10 @@ export PATH
 # --------------------------------------
 # GLOBAL VARIABLES with DEFAULTS
 # --------------------------------------
-g_rsync_options="-auvz"
 g_ssh_server=""
+g_rsync_options="-auvz"
+g_local_data_dir="/mnt/test-glusterfs"
+g_remote_replica_dir="/mnt/test-nfs"
 
 
 # --------------------------------------
@@ -111,9 +113,9 @@ function synchronize_data() {
 
     # Check final slash
     local source_dir=""
-    [[ "${p_local_data_dir}" != */ ]] && p_local_data_dir="${p_local_data_dir}/"
-    [[ "${p_pvc}" != */ ]] && source_dir="${p_local_data_dir}${p_namespace}/${p_pvc}/"
-    [[ "${p_pvc}" == */ ]] && source_dir="${p_local_data_dir}${p_namespace}/${p_pvc}"
+    [[ "${g_local_data_dir}" != */ ]] && g_local_data_dir="${g_local_data_dir}/"
+    [[ "${p_pvc}" != */ ]] && source_dir="${g_local_data_dir}${p_namespace}/${p_pvc}/"
+    [[ "${p_pvc}" == */ ]] && source_dir="${g_local_data_dir}${p_namespace}/${p_pvc}"
 
     log_msg "Check local directory ${source_dir}."
     if [ -d "$source_dir" ]; then
@@ -141,23 +143,23 @@ function synchronize_data() {
     log_msg " Mount NFS Endpoint in remote server"
     log_msg " ------------------------------------------------"
 
-    remote_mount_dir=${p_remote_replica_dir%/}
+    remote_mount_dir=${g_remote_replica_dir%/}
     log_msg "REMOTE: Check remote mount point into ${remote_mount_dir}."
     if execute_remote "mount | grep $remote_mount_dir > /dev/null 2>&1"
     then
-        log_msg "REMOTE: NFS Endpoint already mounted in ${p_remote_replica_dir}."
+        log_msg "REMOTE: NFS Endpoint already mounted in ${g_remote_replica_dir}."
     else
         log_msg "REMOTE: NFS Endpoint isn't mounted. Creating."
-        log_msg "REMOTE: Check remote mount directory exist in ${p_remote_replica_dir}."
-        if execute_remote "test -d $p_remote_replica_dir > /dev/null 2>&1"
+        log_msg "REMOTE: Check remote mount directory exist in ${g_remote_replica_dir}."
+        if execute_remote "test -d $g_remote_replica_dir > /dev/null 2>&1"
         then
             log_msg "REMOTE: Remote mount directory already exist."
         else
-            log_msg "REMOTE: Creating remote mount directory '${p_remote_replica_dir}'."
-            execute_remote "mkdir -p ${p_remote_replica_dir}"
+            log_msg "REMOTE: Creating remote mount directory '${g_remote_replica_dir}'."
+            execute_remote "mkdir -p ${g_remote_replica_dir}"
         fi    
-        log_msg "REMOTE: Mounting NFS in '${p_remote_replica_dir}' into remote server"
-        if execute_remote "mount -t nfs ${p_remote_nfs_endpoint} ${p_remote_replica_dir}"
+        log_msg "REMOTE: Mounting NFS in '${g_remote_replica_dir}' into remote server"
+        if execute_remote "mount -t nfs ${p_remote_nfs_endpoint} ${g_remote_replica_dir}"
         then
             log_msg "REMOTE: Remote mount directory mounted successfully."
         else
@@ -170,21 +172,21 @@ function synchronize_data() {
     log_msg "# Create (if no exist) replica directory into remote server"
     # -----------------------------------------------------------------""
     local replica_dir=""
-    [[ "${p_remote_replica_dir}" != */ ]] && p_remote_replica_dir="${p_remote_replica_dir}/"
-    namespace_dir="${p_remote_replica_dir}${p_namespace}/"
+    [[ "${g_remote_replica_dir}" != */ ]] && g_remote_replica_dir="${g_remote_replica_dir}/"
+    namespace_dir="${g_remote_replica_dir}${p_namespace}/"
 
     if execute_remote "test -d $namespace_dir > /dev/null 2>&1"
     then
         log_msg "REMOTE: Remote namespace directory already exist."
     else
-        log_msg "REMOTE: Creating remote mount directory '${p_remote_replica_dir}'."
+        log_msg "REMOTE: Creating remote mount directory '${g_remote_replica_dir}'."
         log_msg "Creating remote namespace directory '${namespace_dir}'."
         execute_remote "mkdir -p ${namespace_dir}"
         execute_remote "chown nfsnobody:nfsnobody ${namespace_dir}"
     fi    
 
-    [[ "${p_pvc_replica}" != */ ]] && replica_dir="${p_remote_replica_dir}${p_namespace}/${p_pvc_replica}/"
-    [[ "${p_pvc_replica}" == */ ]] && replica_dir="${p_remote_replica_dir}${p_namespace}/${p_pvc_replica}"
+    [[ "${p_pvc_replica}" != */ ]] && replica_dir="${g_remote_replica_dir}${p_namespace}/${p_pvc_replica}/"
+    [[ "${p_pvc_replica}" == */ ]] && replica_dir="${g_remote_replica_dir}${p_namespace}/${p_pvc_replica}"
     if execute_remote "test -d $replica_dir > /dev/null 2>&1"
     then
         log_msg "REMOTE: Remote pvc directory already exist."
@@ -215,8 +217,8 @@ function synchronize_data() {
     # ---------------------------------------------
     # Umount Remote NFS Replica dir
     # ---------------------------------------------
-    # log_msg "Umounting NFS from '${p_remote_replica_dir}' into remote server"
-    # execute_remote "umount ${p_remote_replica_dir} --force"
+    # log_msg "Umounting NFS from '${g_remote_replica_dir}' into remote server"
+    # execute_remote "umount ${g_remote_replica_dir} --force"
     
     log_msg "End of Volume synchronization"
     # return "$E_NOERROR";
@@ -239,7 +241,7 @@ LOG_DIR="${LOGS_PATH}"
 if [[ "${LOG_DIR}" == "" ]]; then
     LOG_DIR="./logs"
 fi
-LOG_FILE="${LOG_DIR}/syncrhonization_execution.log"
+LOG_FILE="${LOG_DIR}/syncrhonization_execution_$(date +%Y%m%d%H%M).log"
 touch $LOG_FILE
 
 # ------------------------------------------
@@ -314,22 +316,22 @@ fi
 # Get REMOTE_REPLICA_DIR option
 # ------------------------------------------
 log_msg "Reading REMOTE_REPLICA_DIR parameter ..."
-p_remote_replica_dir="${REMOTE_REPLICA_DIR}"
-log_msg "Checking REMOTE_REPLICA_DIR ${p_remote_replica_dir}..."
-if [[ "${p_remote_replica_dir}" == "" ]]; then
-    p_remote_replica_dir="$( jq -r '.CONFIGURATION.REMOTE_REPLICA_DIR' ${PLAN_FILE} )"
-    log_msg "Readed REMOTE_REPLICA_DIR '${p_remote_replica_dir}'"
+g_remote_replica_dir="${REMOTE_REPLICA_DIR}"
+log_msg "Checking REMOTE_REPLICA_DIR ${g_remote_replica_dir}..."
+if [[ "${g_remote_replica_dir}" == "" ]]; then
+    g_remote_replica_dir="$( jq -r '.CONFIGURATION.REMOTE_REPLICA_DIR' ${PLAN_FILE} )"
+    log_msg "Readed REMOTE_REPLICA_DIR '${g_remote_replica_dir}'"
 fi
 
 # ------------------------------------------
 # Get LOCAL_DATA_DIR option
 # ------------------------------------------
 log_msg "Reading LOCAL_DATA_DIR parameter ..."
-p_local_data_dir="${LOCAL_DATA_DIR}"
-log_msg "Checking LOCAL_DATA_DIR ${p_local_data_dir}..."
-if [[ "${p_local_data_dir}" == "" ]]; then
-    p_local_data_dir="$( jq -r '.CONFIGURATION.LOCAL_DATA_DIR' ${PLAN_FILE} )"
-    log_msg "Readed LOCAL_DATA_DIR '${p_local_data_dir}'"
+g_local_data_dir="${LOCAL_DATA_DIR}"
+log_msg "Checking LOCAL_DATA_DIR ${g_local_data_dir}..."
+if [[ "${g_local_data_dir}" == "" ]]; then
+    g_local_data_dir="$( jq -r '.CONFIGURATION.LOCAL_DATA_DIR' ${PLAN_FILE} )"
+    log_msg "Readed LOCAL_DATA_DIR '${g_local_data_dir}'"
 fi
  
 # ------------------------------------------
