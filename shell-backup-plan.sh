@@ -53,9 +53,9 @@ g_ssh_server=""
 g_rsync_options="-auvz"
 g_local_data_dir="/mnt/test-glusterfs"
 g_remote_replica_dir="/mnt/test-nfs"
-MAIL_RELAY=""
-MAIL_FROM=""
-MAIL_DEST=""
+MAIL_RELAY="smpt.uoc.edu"
+MAIL_FROM="jguillemat@essiprojets.com"
+MAIL_DEST="jguillemat@essiprojets.com"
 
 # --------------------------------------
 # FUNCTIONS
@@ -415,7 +415,7 @@ IFS=$ORIG_IFS
 # Sends Mail
 # ------------------------------------------
 # log_msg "Sending Mail"
-# send_mail()
+send_mail()
 
 # ------------------------------------------
 # Ends
