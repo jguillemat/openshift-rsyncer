@@ -1,18 +1,17 @@
 #!/bin/bash
 # 
 # Descrition:           
-#   Script para la sincronización de un conjunto de volumenes de glusterfs (pv/pvc) hacia un servidor remoto con
-#   acceso ssh/rsync.
-#   El servidore remoto (SSH_SERVER) deberá poder montar el servicio NFS localmente.
-#
+#   Script para la recuperacion de datos de un conjunto de volumenes de replica en NFS remoto contra volumenes "glusterfs".
+#   El servidor remoto (SSH_SERVER) debe poder montar el servicio NFS localmente, del cual se recogeran los datos para poder recuperarlos.
+#   
 #   Configuracion basado en un fichero de configuración:
 #    {
-#	    "REPLICA_VOLUMES": [ {
+#	    "RECOVERY_VOLUMES": [ {
+#		    "PVC_REPLICA": "replica-pvc",
 #		    "NAMESPACE": "pvc-backuper",
 #		    "PVC": "data-pvc",
 #		    "PV": "pvc-0e48b67d-6a98-11ea-a00e-001a4a461c22",
 #		    "PVC_GLUSTER_MOUNT_DATA": "vol_4619cd02f4cf514517c6043e33008f3d",
-#		    "PVC_REPLICA": "replica-pvc"
 #	    }, {
 #		    "NAMESPACE": "pvc-backuper",
 #		    "PVC": "data-pvc",
@@ -26,9 +25,10 @@
 #           "REMOTE_NFS_ENDPOINT": "vdm-oscont.uoc.es:/PRO_openshift_repo/",
 #		    "REMOTE_REPLICA_DIR": "/mnt/nfs/",
 #		    "LOCAL_DATA_DIR": "/tmp/nfs/",
-#		    "BACKUP_RSYNC_OPTIONS": "-avz"
+#		    "RECOVERY_RSYNC_OPTIONS": "-avz"
 #	    }
 #    } 
+
 
 # EXIT ERRORS
 readonly E_NOSYNCPLAN=255         # CANNOT GET SYNC PLAN FILE
@@ -49,7 +49,7 @@ export PATH
 # --------------------------------------
 g_result_code=OK
 g_ssh_server=""
-g_BACKUP_RSYNC_OPTIONS="-auvz"
+g_recovery_rsync_options="-auvz"
 g_local_data_dir="/mnt/test-glusterfs"
 g_remote_replica_dir="/mnt/test-nfs"
 MAIL_RELAY="smpt.uoc.edu"
@@ -82,9 +82,9 @@ function end_process()
 
 function send_mail() {
 
-    sed "1iSubject: ($g_result_code) Syncrhonize PV Data from Castelldefels to Nexica\
+    sed "1iSubject: ($g_result_code) Recovery PV Data from Nexica to Castelldefels\
     \nTo: <$MAIL_DEST>\
-    \nFrom: Backup PV Data <$MAIL_FROM>\
+    \nFrom: Recovery PV Data <$MAIL_FROM>\
     \n" $LOG_FILE | msmtp --host=$MAIL_RELAY --from=$MAIL_FROM $MAIL_DEST
 }
 # --------------------------------------
@@ -109,12 +109,12 @@ function execute_remote() {
 
 
 # --------------------------------------
-# BACKUP PV DATA METHOD
+# RECOVERY PV DATA METHOD
 # --------------------------------------
 
-function synchronize_data() {
+function recovery_pv_data() {
 
-    log_msg "Entering into synchronize_data ${*} ..."
+    log_msg "Entering into recovery_pv_data ${*} ..."
     local p_namespace="$1"
     local p_pvc="$2"
     local p_mount_data="$3"
@@ -125,39 +125,10 @@ function synchronize_data() {
         error_msg "ERROR: NAMESPACE not specified. Exiting method."
         return "${E_NONAMESPACE}"
     fi        
-        
-    log_msg " ------------------------------------------------"
-    log_msg " Mount GlusterVol (SOURCE) into local dir"
-    log_msg " ------------------------------------------------"
-
-    local local_dir=${g_local_data_dir%/}
-    local source_dir="${local_dir}/${p_namespace}/${p_pvc}"
-    [[ "${source_dir}" != */ ]] && source_dir="${source_dir}/"
-
-    log_msg "Check local directory ${source_dir}."
-    if [ -d "$source_dir" ]; then
-        log_msg "Local directory already ${source_dir} exist."
-    else 
-        log_msg "Creating local directory ${source_dir}."
-        mkdir -p "${source_dir}"
-    fi
-
-    gluster_mount_dir=${p_mount_data%/}
-    log_msg "Check local mount point into ${gluster_mount_dir}."
-    if mount | grep ${gluster_mount_dir} > /dev/null; then
-         log_msg "GlusterVol already mounted locally"
-    else 
-        log_msg "Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
-        if mount -t glusterfs ${p_mount_data} ${source_dir} -o ro  > /dev/null; then
-            log_msg "GlusterVol mounted locally"
-        else 
-            error_msg "ERROR Mounting GlusterVol '${p_mount_data}' into '${source_dir}'. Exiting method"
-            return "${E_CANNOT_MOUNT_GLUSTER}"
-        fi
-    fi
+      
 
     log_msg " ------------------------------------------------"
-    log_msg " Mount NFS Endpoint in remote server"
+    log_msg " Mount NFS Endpoint (SOURCE) in remote server"
     log_msg " ------------------------------------------------"
 
     remote_mount_dir=${g_remote_replica_dir%/}
@@ -176,7 +147,7 @@ function synchronize_data() {
             execute_remote "mkdir -p ${g_remote_replica_dir}"
         fi    
         log_msg "REMOTE: Mounting NFS in '${g_remote_replica_dir}' into remote server"
-        if execute_remote "mount -t nfs ${p_remote_nfs_endpoint} ${g_remote_replica_dir}"
+        if execute_remote "mount -t nfs ${p_remote_nfs_endpoint} ${g_remote_replica_dir} -o ro"
         then
             log_msg "REMOTE: Remote NFS endpoint mounted successfully."
         else
@@ -187,7 +158,8 @@ function synchronize_data() {
 
     log_msg "# -----------------------------------------------------------------"
     log_msg "# Create (if no exist) replica directory into remote server"
-    # -----------------------------------------------------------------""
+    log_msg "# -----------------------------------------------------------------"
+
     local replica_dir=""
     [[ "${g_remote_replica_dir}" != */ ]] && g_remote_replica_dir="${g_remote_replica_dir}/"
     namespace_dir="${g_remote_replica_dir}${p_namespace}/"
@@ -212,13 +184,43 @@ function synchronize_data() {
         execute_remote "mkdir -p ${replica_dir}"
         execute_remote "chown nfsnobody:nfsnobody ${replica_dir}"
     fi    
-   
+        
     log_msg " ------------------------------------------------"
-    log_msg " Start rsync data"
+    log_msg " Mount GlusterVol (DEST) into local dir"
     log_msg " ------------------------------------------------"
 
-    log_msg "Native RSYNC starts for PVC '${p_pvc}' from DIR '${source_dir}' from NAMESPACE '${p_namespace}' into '${replica_dir}' with rsync options '${g_BACKUP_RSYNC_OPTIONS}' ..."
-    rsync ${g_BACKUP_RSYNC_OPTIONS} ${source_dir} ${g_ssh_server}:/${replica_dir}
+    local local_dir=${g_local_data_dir%/}
+    local source_dir="${local_dir}/${p_namespace}/${p_pvc}"
+    [[ "${source_dir}" != */ ]] && source_dir="${source_dir}/"
+
+    log_msg "Check local directory ${source_dir}."
+    if [ -d "$source_dir" ]; then
+        log_msg "Local directory already ${source_dir} exist."
+    else 
+        log_msg "Creating local directory ${source_dir}."
+        mkdir -p "${source_dir}"
+    fi
+
+    gluster_mount_dir=${p_mount_data%/}
+    log_msg "Check local mount point into ${gluster_mount_dir}."
+    if mount | grep ${gluster_mount_dir} > /dev/null; then
+         log_msg "GlusterVol already mounted locally"
+    else 
+        log_msg "Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
+        if mount -t glusterfs ${p_mount_data} ${source_dir} -o ro > /dev/null; then
+            log_msg "GlusterVol mounted locally"
+        else 
+            error_msg "ERROR Mounting GlusterVol '${p_mount_data}' into '${source_dir}'. Exiting method"
+            return "${E_CANNOT_MOUNT_GLUSTER}"
+        fi
+    fi
+
+    log_msg " ------------------------------------------------"
+    log_msg " Start recovery data (NFS -> GlusterVol)"
+    log_msg " ------------------------------------------------"
+
+    log_msg "Native RSYNC starts for PV '${p_pvc}' from Remote Dir '${replica_dir}' into '${source_dir}' with rsync options '${g_recovery_rsync_options}' ..."
+    rsync ${g_recovery_rsync_options} ${g_ssh_server}:/${replica_dir} ${source_dir}
     if [ $? == 0 ]; then
         log_msg "Native RSYNC finished successfully"
     else
@@ -238,7 +240,7 @@ function synchronize_data() {
     # log_msg "Umounting NFS from '${g_remote_replica_dir}' into remote server"
     # execute_remote "umount ${g_remote_replica_dir} --force"
     
-    log_msg "End of Volume synchronization"
+    log_msg "End of Volume Recovery"
     return "$E_NOERROR";
 }
 
@@ -258,7 +260,7 @@ LOG_DIR="${LOGS_PATH}"
 if [[ "${LOG_DIR}" == "" ]]; then
     LOG_DIR="./logs"
 fi
-LOG_FILE="${LOG_DIR}/syncrhonization_execution_$(date +%Y%m%d%H%M).log"
+LOG_FILE="${LOG_DIR}/recovery_data_execution_$(date +%Y%m%d%H%M).log"
 
 # init log file
 > $LOG_FILE
@@ -354,12 +356,12 @@ log_msg "Readed LOCAL_DATA_DIR '${g_local_data_dir}'"
 # ------------------------------------------
 # Get RSYNC option
 # ------------------------------------------
-log_msg "Reading BACKUP_RSYNC_OPTIONS parameter ..."
-g_BACKUP_RSYNC_OPTIONS="${BACKUP_RSYNC_OPTIONS}"
-if [[ "${g_BACKUP_RSYNC_OPTIONS}" == "" ]]; then
-    g_BACKUP_RSYNC_OPTIONS="$( jq -r '.CONFIGURATION.BACKUP_RSYNC_OPTIONS' ${PLAN_FILE} )"
+log_msg "Reading RECOVERY_RSYNC_OPTIONS parameter ..."
+g_recovery_rsync_options="${RECOVERY_RSYNC_OPTIONS}"
+if [[ "${g_recovery_rsync_options}" == "" ]]; then
+    g_recovery_rsync_options="$( jq -r '.CONFIGURATION.RECOVERY_RSYNC_OPTIONS' ${PLAN_FILE} )"
 fi
-log_msg "Readed BACKUP_RSYNC_OPTIONS '${g_BACKUP_RSYNC_OPTIONS}'"
+log_msg "Readed RECOVERY_RSYNC_OPTIONS '${g_recovery_rsync_options}'"
 
  
 # ------------------------------------------
@@ -385,9 +387,9 @@ log_msg "Readed MAIL_DEST: '${g_mail_dest}'"
 # ------------------------------------------
 # Process plan data 
 # ------------------------------------------
-log_msg "Starting processing sync plan file ..."
+log_msg "Starting processing recovery plan file ..."
 
-list=$(cat "$PLAN_FILE" | jq -r '.REPLICA_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.PVC_GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"')
+list=$(cat "$PLAN_FILE" | jq -r '.RECOVERY_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.PVC_GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"')
 
 ORIG_IFS=$IFS        # Save the original IFS
 LINE_IFS=$'\n'$'\r'  # For splitting input into lines
@@ -418,12 +420,12 @@ for line in $list; do
         # Process plan entry
         # ------------------------------------------.
         if [ -n "$p_namespace" ] && [ -n "$p_pvc" ] && [ -n "$p_mount_data" ] && [ -n "$p_pvc_replica" ]; then
-            log_msg "Calling synchronize_data method"
-            synchronize_data ${p_namespace} ${p_pvc} ${p_mount_data} ${p_pvc_replica}
+            log_msg "Calling recovery_pv_data method"
+            recovery_pv_data ${p_namespace} ${p_pvc} ${p_mount_data} ${p_pvc_replica}
             if [ $? == 0 ]; then
-                log_msg "synchronize_data exists ok"
+                log_msg "recovery_pv_data exists ok"
             else
-                error_msg "ERROR - Some error succeded in synchronize_data (LINE: ${line} )"
+                error_msg "ERROR - Some error succeded in recovery_pv_data (LINE: ${line} )"
             fi
         else
             error_msg "ERROR - Some required parameter not speciefied (LINE: ${line} )"

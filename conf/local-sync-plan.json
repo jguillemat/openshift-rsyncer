@@ -1,69 +1,135 @@
 {
     "CONFIGURATION": {
         "LOCAL_DATA_DIR": "/mnt/test-glusterfs/",
+        "MAIL_DEST": "jguillemat@essiprojects.com",
+        "MAIL_FROM": "jguillemat@essiprojects.com",
+        "MAIL_RELAY": "smpt.uoc.edu",
         "REMOTE_NFS_ENDPOINT": "vdm-oscont.uoc.es:/PRO_openshift_repo/",
         "REMOTE_REPLICA_DIR": "/mnt/test-nfs/",
-        "RSYNC_OPTIONS": "-auvz --delete-after",
+        "BACKUP_RSYNC_OPTIONS": "-auvz --delete-after",
+        "RECOVERY_RSYNC_OPTIONS": "-auvz --delete-after",
         "SSH_OPTIONS": "-o ConnectTimeout=10",
-        "SSH_SERVER": "root@ocp-nexica-bastion.uoc.es",
-        "MAIL_RELAY": "smpt.uoc.edu",
-        "MAIL_FROM": "jguillemat@essiprojects.com",
-        "MAIL_DEST" : "jguillemat@essiprojects.com"
+        "SSH_SERVER": "root@ocp-nexica-bastion.uoc.es"
     },
-    "SOURCE_VOLUMES": [
+    "RECOVERY_VOLUMES": [
         {
-            "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_4619cd02f4cf514517c6043e33008f3d",
             "NAMESPACE": "pvc-backuper",
             "PVC": "data-pvc",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_4619cd02f4cf514517c6043e33008f3d",
+            "PVC_REPLICA": "replica-pvc",
+            "PVC_REPLICA_DIR": "pvc-backuper/replica-pvc"
+        },
+        {
+            "NAMESPACE": "default",
+            "PVC": "gluster-registry-claim",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.101:gluster-registry-volume",
+            "PVC_REPLICA": "registry-volume-replica",
+            "PVC_REPLICA_DIR": "default/registry-volume-replica"
+        },
+        {
+            "NAMESPACE": "ci",
+            "PVC": "jenkinsdevops",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_3c0baac9eda5ad8664616ff2090c5a02",
+            "PVC_REPLICA": "jenkinsdevops-replica",
+            "PVC_REPLICA_DIR": "ci/jenkinsdevops-replica"
+        },
+        {
+            "NAMESPACE": "ci",
+            "PVC": "maven-uoc-slave-pvc",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_050b256b9a1162288eebcc12b3406168",
+            "PVC_REPLICA": "maven-uoc-slave-pvc-replica",
+            "PVC_REPLICA_DIR": "ci/maven-uoc-slave-pvc-replica"
+        },
+        {
+            "NAMESPACE": "teslauoc",
+            "PVC": "app-glusterfs",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_446e0fdf809a3f2c9471b56c93349cfd",
+            "PVC_REPLICA": "app-glusterfs-replica",
+            "PVC_REPLICA_DIR": "teslauoc/app-glusterfs-replica"
+        },
+        {
+            "NAMESPACE": "admincv-ws",
+            "PVC": "rabbitmq-data",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_dcd6c7a59ba95463025ae35e9ede4207",
+            "PVC_REPLICA": "rabbitmq-data-replica",
+            "PVC_REPLICA_DIR": "admincv-ws/rabbitmq-data-replica"
+        },
+        {
+            "NAMESPACE": "auladesp",
+            "PVC": "app-glusterfs",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_cc7fab909e591f7c056266052fc22aa4",
+            "PVC_REPLICA": "app-glusterfs-replica",
+            "PVC_REPLICA_DIR": "auladesp/app-glusterfs-replica"
+        },
+        {
+            "NAMESPACE": "azurebackup",
+            "PVC": "azure-backup2",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_2c5364d631c32ec49df5808dd1ca14d7",
+            "PVC_REPLICA": "azure-backup2-replica",
+            "PVC_REPLICA_DIR": "azurebackup/azure-backup2-replica"
+        },
+        {
+            "NAMESPACE": "lati-lau",
+            "PVC": "campus-etl-pvc2",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_91e4ed8976f6010bcaa74d0a38f00ccc",
+            "PVC_REPLICA": "campus-etl-pvc2-replica",
+            "PVC_REPLICA_DIR": "lati-lau/campus-etl-pvc2-replica"
+        }
+    ],
+    "REPLICA_VOLUMES": [
+        {
+            "NAMESPACE": "pvc-backuper",
+            "PVC": "data-pvc",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_4619cd02f4cf514517c6043e33008f3d",
             "PVC_REPLICA": "replica-pvc"
         },
         {
-            "GLUSTER_MOUNT_DATA": "192.168.195.101:gluster-registry-volume",
             "NAMESPACE": "default",
             "PVC": "gluster-registry-claim",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.101:gluster-registry-volume",
             "PVC_REPLICA": "registry-volume-replica"
         },
         {
-            "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_3c0baac9eda5ad8664616ff2090c5a02",
             "NAMESPACE": "ci",
             "PVC": "jenkinsdevops",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_3c0baac9eda5ad8664616ff2090c5a02",
             "PVC_REPLICA": "jenkinsdevops-replica"
         },
         {
-            "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_050b256b9a1162288eebcc12b3406168",
             "NAMESPACE": "ci",
             "PVC": "maven-uoc-slave-pvc",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_050b256b9a1162288eebcc12b3406168",
             "PVC_REPLICA": "maven-uoc-slave-pvc-replica"
         },
         {
-            "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_446e0fdf809a3f2c9471b56c93349cfd",
             "NAMESPACE": "teslauoc",
             "PVC": "app-glusterfs",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_446e0fdf809a3f2c9471b56c93349cfd",
             "PVC_REPLICA": "app-glusterfs-replica"
         },
         {
-            "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_dcd6c7a59ba95463025ae35e9ede4207",
             "NAMESPACE": "admincv-ws",
             "PVC": "rabbitmq-data",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_dcd6c7a59ba95463025ae35e9ede4207",
             "PVC_REPLICA": "rabbitmq-data-replica"
         },
         {
-            "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_cc7fab909e591f7c056266052fc22aa4",
             "NAMESPACE": "auladesp",
             "PVC": "app-glusterfs",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_cc7fab909e591f7c056266052fc22aa4",
             "PVC_REPLICA": "app-glusterfs-replica"
         },
         {
-            "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_2c5364d631c32ec49df5808dd1ca14d7",
             "NAMESPACE": "azurebackup",
             "PVC": "azure-backup2",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_2c5364d631c32ec49df5808dd1ca14d7",
             "PVC_REPLICA": "azure-backup2-replica"
         },
         {
-            "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_91e4ed8976f6010bcaa74d0a38f00ccc",
             "NAMESPACE": "lati-lau",
             "PVC": "campus-etl-pvc2",
+            "PVC_GLUSTER_MOUNT_DATA": "192.168.195.105:vol_91e4ed8976f6010bcaa74d0a38f00ccc",
             "PVC_REPLICA": "campus-etl-pvc2-replica"
         }
-    ] 
+    ]
 }
