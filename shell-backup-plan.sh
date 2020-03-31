@@ -190,15 +190,14 @@ function synchronize_data() {
     log_msg " Start rsync data"
     log_msg " ------------------------------------------------"
 
-    log_msg "Native RSYNC starts from DIR ${source_dir} of POD ${p_name} from NAMESPACE ${project} into ${replica_dir} with rsync options '${RSYNC_OPTIONS}' ..."
+    log_msg "Native RSYNC starts for PV '${p_pvc}' from DIR '${source_dir}' from NAMESPACE ${p_namespace} into ${replica_dir} with rsync options '${RSYNC_OPTIONS}' ..."
     rsync ${p_rsync_options} ${source_dir} ${p_ssh_server}:/${replica_dir}
     if [ $? == 0 ]; then
-        log_msg "rsync exist ok"
+        log_msg "Native RSYNC finished successfully"
     else
         error_msg "ERROR - Some error succeded in rsync process"
     fi
-    log_msg "Native RSYNC finished."
-
+ 
     # ---------------------------------------------
     # Umount Gluster Volume localy
     # ---------------------------------------------
@@ -274,7 +273,7 @@ fi
 # ------------------------------------------
 if check_ssh_session
 then 
-    log_msg "SSH connection no available"
+    log_msg "SSH connection available"
 else
     error_msg "ERROR - SSH connection no available"
     exit "${E_NOSSH_CONNECTION}" 
