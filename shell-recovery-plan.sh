@@ -64,14 +64,14 @@ MAIL_DEST=""
 #
 function log_msg() {
     echo "$(date +%Y%m%d%H%M) - $@"
-    echo -e "$(date +%Y%m%d%H%M) - $@" 1>&2 >> $LOG_FILE
+    echo -e "$(date +%Y%m%d%H%M) - $@" 1>&2 >> $RECOVERY_LOG_FILE
 }
 
 function error_msg() {
     g_result_code=ERROR
 
     echo "$(date +%Y%m%d%H%M) - $@" 1>&2;
-    echo -e "$(date +%Y%m%d%H%M) - $@" >> $LOG_FILE
+    echo -e "$(date +%Y%m%d%H%M) - $@" >> $RECOVERY_LOG_FILE
 }
 
 function end_process() 
@@ -85,7 +85,7 @@ function send_mail() {
     sed "1iSubject: ($g_result_code) Recovery PV Data from Nexica to Castelldefels\
     \nTo: <$MAIL_DEST>\
     \nFrom: Recovery PV Data <$MAIL_FROM>\
-    \n" $LOG_FILE | msmtp --host=$MAIL_RELAY --from=$MAIL_FROM $MAIL_DEST
+    \n" $RECOVERY_LOG_FILE | msmtp --host=$MAIL_RELAY --from=$MAIL_FROM $MAIL_DEST
 }
 # --------------------------------------
 #
@@ -260,10 +260,10 @@ LOG_DIR="${LOGS_PATH}"
 if [[ "${LOG_DIR}" == "" ]]; then
     LOG_DIR="./logs"
 fi
-LOG_FILE="${LOG_DIR}/recovery_data_execution_$(date +%Y%m%d%H%M).log"
+RECOVERY_LOG_FILE="${LOG_DIR}/recovery_data_execution_$(date +%Y%m%d%H%M).log"
 
 # init log file
-> $LOG_FILE
+> $RECOVERY_LOG_FILE
 
 # ------------------------------------------
 # Check sync plan file 
