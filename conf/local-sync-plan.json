@@ -15,6 +15,12 @@
             "PVC_REPLICA": "replica-pvc"
         },
         {
+            "GLUSTER_MOUNT_DATA": "192.168.195.105:gluster-registry-volume",
+            "NAMESPACE": "default",
+            "PVC": "gluster-registry-claim",
+            "PVC_REPLICA": "registry-volume-replica"
+        },
+        {
             "GLUSTER_MOUNT_DATA": "192.168.195.105:vol_3c0baac9eda5ad8664616ff2090c5a02",
             "NAMESPACE": "ci",
             "PVC": "jenkinsdevops",

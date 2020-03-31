@@ -121,7 +121,7 @@ function synchronize_data() {
 
     log_msg "Check local directory ${source_dir}."
     if [ -d "$source_dir" ]; then
-        log_msg "Local directory ${source_dir} exist."
+        log_msg "Local directory already ${source_dir} exist."
     else 
         log_msg "Creating local directory ${source_dir}."
         mkdir -p "${source_dir}"
@@ -165,9 +165,9 @@ function synchronize_data() {
 
     fi
 
-    # -----------------------------------------------------------------
-    # Create (if no exist) replica directory into remote server
-    # -----------------------------------------------------------------
+    log_msg "# -----------------------------------------------------------------"
+    log_msg "# Create (if no exist) replica directory into remote server"
+    log_msg "# -----------------------------------------------------------------"
     local replica_dir=""
     [[ "${p_remote_replica_dir}" != */ ]] && p_remote_replica_dir="${p_remote_replica_dir}/"
     namespace_dir="${p_remote_replica_dir}${p_namespace}/"
