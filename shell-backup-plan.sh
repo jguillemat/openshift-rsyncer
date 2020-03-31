@@ -133,11 +133,11 @@ function synchronize_data() {
          log_msg "GlusterVol already mounted locally"
     else 
         log_msg "Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
-        if mount -t glusterfs ${p_mount_data} ${source_dir}   > /dev/null; then
+        if mount -t glusterfs ${p_mount_data} ${source_dir} -o ro  > /dev/null; then
             log_msg "GlusterVol mounted locally"
         else 
             error_msg "ERROR Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
-            # return "${E_CANNOT_MOUNT_GLUSTER}"
+            return "${E_CANNOT_MOUNT_GLUSTER}"
         fi
     fi
 
@@ -161,13 +161,18 @@ function synchronize_data() {
             execute_remote "mkdir -p ${p_remote_replica_dir}"
         fi    
         log_msg "REMOTE: Mounting NFS in '${p_remote_replica_dir}' into remote server"
-        execute_remote "mount -t nfs ${p_remote_nfs_endpoint} ${p_remote_replica_dir}"
-
+        if execute_remote "mount -t nfs ${p_remote_nfs_endpoint} ${p_remote_replica_dir}"
+        then
+            log_msg "REMOTE: Remote mount directory mounted successfully."
+        else
+            error_msg "REMOTE: ERROR Mounting NFS '${p_remote_nfs_endpoint}' into '${sourp_remote_nfs_endpointce_dir}' "
+            return "${REMOTE}"
+        fi 
     fi
 
     log_msg "# -----------------------------------------------------------------"
     log_msg "# Create (if no exist) replica directory into remote server"
-    log_msg "# -----------------------------------------------------------------"
+    # -----------------------------------------------------------------""
     local replica_dir=""
     [[ "${p_remote_replica_dir}" != */ ]] && p_remote_replica_dir="${p_remote_replica_dir}/"
     namespace_dir="${p_remote_replica_dir}${p_namespace}/"
@@ -197,7 +202,7 @@ function synchronize_data() {
     log_msg " Start rsync data"
     log_msg " ------------------------------------------------"
 
-    log_msg "Native RSYNC starts for PV '${p_pvc}' from DIR '${source_dir}' from NAMESPACE ${p_namespace} into ${replica_dir} with rsync options '${RSYNC_OPTIONS}' ..."
+    log_msg "Native RSYNC starts for PV '${p_pvc}' from DIR '${source_dir}' from NAMESPACE ${p_namespace} into ${replica_dir} with rsync options '${p_rsync_options}' ..."
     rsync ${p_rsync_options} ${source_dir} ${p_ssh_server}:/${replica_dir}
     if [ $? == 0 ]; then
         log_msg "Native RSYNC finished successfully"
