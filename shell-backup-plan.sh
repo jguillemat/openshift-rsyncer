@@ -20,12 +20,6 @@
 #		    "PV": "pvc-0e48b67d-6a98-11ea-a00e-001a4a461c22",
 #		    "GLUSTER_MOUNT_DATA": "vol_4619cd02f4cf514517c6043e33008f3d",
 #		    "PVC_REPLICA": "replica-pvc"
-#	    }, {
-#		    "NAMESPACE": "pvc-backuper",
-#		    "PVC": "data-pvc",
-#		    "PV": "pvc-0e48b67d-6a98-11ea-a00e-001a4a461c22",
-#		    "GLUSTER_MOUNT_DATA": "vol_4619cd02f4cf514517c6043e33008f3d",
-#		    "PVC_REPLICA": "replica-pvc"
 #	    }
 #	    ], 
 #	    "CONFIGURATION": {
@@ -52,8 +46,10 @@ PATH=$PATH:/usr/bin/:.
 export PATH
 
 # --------------------------------------
-# GLOBAL VARIABLES
+# GLOBAL VARIABLES with DEFAULTS
 # --------------------------------------
+g_rsync_options="-auvz"
+g_ssh_server=""
 
 
 # --------------------------------------
@@ -89,7 +85,7 @@ function check_ssh_session() {
 
 function execute_remote() {
     # log_msg "Executing SSH: '$@' "
-    ssh ${p_ssh_server} "$p_ssh_options" "$@"
+    ssh ${g_ssh_server} "$p_ssh_options" "$@"
 }
 # --------------------------------------
 # SYNCHRONIZE METHOD
@@ -202,8 +198,8 @@ function synchronize_data() {
     log_msg " Start rsync data"
     log_msg " ------------------------------------------------"
 
-    log_msg "Native RSYNC starts for PVC '${p_pvc}' from DIR '${source_dir}' from NAMESPACE ${p_namespace}' into '${replica_dir}' with rsync options '${p_rsync_options}' ..."
-    rsync ${p_rsync_options} ${source_dir} ${p_ssh_server}:/${replica_dir}
+    log_msg "Native RSYNC starts for PVC '${p_pvc}' from DIR '${source_dir}' from NAMESPACE '${p_namespace}' into '${replica_dir}' with rsync options '${g_rsync_options}' ..."
+    rsync ${g_rsync_options} ${source_dir} ${g_ssh_server}:/${replica_dir}
     if [ $? == 0 ]; then
         log_msg "Native RSYNC finished successfully"
     else
@@ -275,11 +271,11 @@ log_msg "Getted PLAN_FILE = '${PLAN_FILE}'."
 # Get SSH_SERVER option
 # ------------------------------------------
 log_msg "Reading SSH_SERVER parameter ..."
-p_ssh_server="${SSH_SERVER}"
-log_msg "Checking SSH_SERVER ${p_ssh_server}..."
-if [[ "${p_ssh_server}" == "" ]]; then
-    p_ssh_server="$( jq -r '.CONFIGURATION.SSH_SERVER' ${PLAN_FILE} )"
-    log_msg "Readed SSH_SERVER '${p_ssh_server}'"
+g_ssh_server="${SSH_SERVER}"
+log_msg "Checking SSH_SERVER ${g_ssh_server}..."
+if [[ "${g_ssh_server}" == "" ]]; then
+    g_ssh_server="$( jq -r '.CONFIGURATION.SSH_SERVER' ${PLAN_FILE} )"
+    log_msg "Readed SSH_SERVER '${g_ssh_server}'"
 fi
 
 # ------------------------------------------
@@ -340,11 +336,11 @@ fi
 # Get RSYNC option
 # ------------------------------------------
 log_msg "Reading RSYNC_OPTIONS parameter ..."
-p_rsync_options="${RSYNC_OPTIONS}"
-log_msg "Checking RSYNC_OPTIONS ${p_rsync_options}..."
-if [[ "${p_rsync_options}" == "" ]]; then
-    p_rsync_options="$( jq -r '.CONFIGURATION.RSYNC_OPTIONS' ${PLAN_FILE} )"
-    log_msg "Readed RSYNC_OPTIONS '${p_rsync_options}'"
+g_rsync_options="${RSYNC_OPTIONS}"
+log_msg "Checking RSYNC_OPTIONS ${g_rsync_options}..."
+if [[ "${g_rsync_options}" == "" ]]; then
+    g_rsync_options="$( jq -r '.CONFIGURATION.RSYNC_OPTIONS' ${PLAN_FILE} )"
+    log_msg "Readed RSYNC_OPTIONS '${g_rsync_options}'"
 fi        
 
 # ------------------------------------------
