@@ -52,6 +52,11 @@ PATH=$PATH:/usr/bin/:.
 export PATH
 
 # --------------------------------------
+# GLOBAL VARIABLES
+# --------------------------------------
+
+
+# --------------------------------------
 # FUNCTIONS
 # --------------------------------------
 
@@ -59,10 +64,12 @@ export PATH
 #
 function log_msg() {
     echo "$(date +%Y%m%d%H%M) - $@"
+    echo -e "$(date +%Y%m%d%H%M) - $@" 1>&2 >> $LOG_FILE
 }
 
 function error_msg() {
     echo "$(date +%Y%m%d%H%M) - $@" 1>&2;
+    echo -e "$(date +%Y%m%d%H%M) - $@" >> $LOG_FILE
 }
 
 # --------------------------------------
@@ -223,6 +230,17 @@ function synchronize_data() {
 ## ------------------------------------------ ##
 ## ------------------------------------------ ##
 
+
+# ------------------------------------------
+# Check log file 
+# ------------------------------------------
+LOG_DIR="${LOGS_PATH}"
+if [[ "${LOG_DIR}" == "" ]]; then
+    LOG_DIR="./logs"
+fi
+LOG_FILE="${LOG_DIR}/syncrhonization_execution.log"
+touch $LOG_FILE
+
 # ------------------------------------------
 # Check sync plan file 
 # ------------------------------------------
@@ -246,6 +264,7 @@ if [[ ! -s "$PLAN_FILE" ]]; then
     error_msg "ERROR - Not sync plan data into '${PLAN_FILE}' "
     exit "${E_SYNCPLAN_EMPTY}" 
 fi
+log_msg "Getted PLAN_FILE = '${PLAN_FILE}'."
 
 # ------------------------------------------
 # Get SSH_SERVER option
@@ -335,7 +354,7 @@ LINE_IFS=$'\n'$'\r'  # For splitting input into lines
 FIELD_IFS=$'\n';     # For splitting lines into fields
 IFS=$LINE_IFS
 for line in $list; do
-    echo "LINE=${line}"
+    echo " Processed LINE=${line}"
     IFS=$FIELD_IFS
 
     linea=($line)
