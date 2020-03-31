@@ -78,9 +78,8 @@ function error_msg() {
 
 function end_process() 
 {
-    local error_code="${1}"
-    send_mail()
-    exit "${error_code}"
+    send_mail
+    exit "$1"
 }
 
 function send_mail() {
@@ -441,7 +440,7 @@ IFS=$ORIG_IFS
 # Sends Mail
 # ------------------------------------------
 # log_msg "Sending Mail"
-send_mail()
+send_mail
 
 # ------------------------------------------
 # Ends
