@@ -273,13 +273,18 @@ PLAN_DIR="${SYNC_PLAN_PATH}"
 if [[ "${PLAN_DIR}" == "" ]]; then
     PLAN_DIR="./conf"
 fi
+log_msg "Getted PLAN_DIR = '${PLAN_DIR}'."
 
 # ------------------------------------------
 # Check sync plan data 
 # ------------------------------------------
 log_msg "Getting PLAN_FILE parameter ..."
-PLAN_FILE="${PLAN_DIR}/local-sync-plan.json"
+PLAN_FILE="${PLAN_FILE}"
+if [[ "${PLAN_FILE}" == "" ]]; then
+    PLAN_FILE="${PLAN_DIR}/local-sync-plan.json"
+fi
 
+# Check Plan File JSON
 if [[ ! -e "$PLAN_FILE" ]]; then
     error_msg "ERROR - Sync plan file doesn't exist '${PLAN_FILE}' "
     end_process "${E_NOSYNCPLAN}" 
@@ -293,9 +298,8 @@ log_msg "Getted PLAN_FILE = '${PLAN_FILE}'."
 # ------------------------------------------
 # Get SSH_SERVER option
 # ------------------------------------------
-log_msg "Reading SSH_SERVER parameter ..."
+# log_msg "Reading SSH_SERVER parameter ..."
 g_ssh_server="${SSH_SERVER}"
-log_msg "Checking SSH_SERVER ${g_ssh_server}..."
 if [[ "${g_ssh_server}" == "" ]]; then
     g_ssh_server="$( jq -r '.CONFIGURATION.SSH_SERVER' ${PLAN_FILE} )"
 fi
@@ -306,11 +310,11 @@ log_msg "Readed SSH_SERVER '${g_ssh_server}'"
 # Get SSH_OPTIONS option
 # ------------------------------------------
 p_ssh_options="${SSH_OPTIONS}"
-log_msg "Checking SSH_OPTIONS ${p_ssh_options}..."
+# log_msg "Checking SSH_OPTIONS ${p_ssh_options}..."
 if [[ "${p_ssh_options}" == "" ]]; then
     p_ssh_options="$( jq -r '.CONFIGURATION.SSH_OPTIONS' ${PLAN_FILE} )"
-    log_msg "Readed SSH_OPTIONS '${p_ssh_options}'"
 fi
+log_msg "Readed SSH_OPTIONS '${p_ssh_options}'"
 
 # ------------------------------------------
 # Check SSH Connection
@@ -326,7 +330,7 @@ fi
 # ------------------------------------------
 # Get REMOTE_NFS_ENDPOINT option
 # ------------------------------------------
-log_msg "Reading REMOTE_NFS_ENDPOINT parameter ..."
+# log_msg "Reading REMOTE_NFS_ENDPOINT parameter ..."
 p_remote_nfs_endpoint="${REMOTE_NFS_ENDPOINT}"
 if [[ "${p_remote_nfs_endpoint}" == "" ]]; then
     p_remote_nfs_endpoint="$( jq -r '.CONFIGURATION.REMOTE_NFS_ENDPOINT' ${PLAN_FILE} )"
@@ -336,7 +340,7 @@ log_msg "Readed REMOTE_NFS_ENDPOINT '${p_remote_nfs_endpoint}'"
 # ------------------------------------------
 # Get REMOTE_REPLICA_DIR option
 # ------------------------------------------
-log_msg "Reading REMOTE_REPLICA_DIR parameter ..."
+# log_msg "Reading REMOTE_REPLICA_DIR parameter ..."
 g_remote_replica_dir="${REMOTE_REPLICA_DIR}"
 if [[ "${g_remote_replica_dir}" == "" ]]; then
     g_remote_replica_dir="$( jq -r '.CONFIGURATION.REMOTE_REPLICA_DIR' ${PLAN_FILE} )"
@@ -346,7 +350,7 @@ log_msg "Readed REMOTE_REPLICA_DIR '${g_remote_replica_dir}'"
 # ------------------------------------------
 # Get LOCAL_DATA_DIR option
 # ------------------------------------------
-log_msg "Reading LOCAL_DATA_DIR parameter ..."
+# log_msg "Reading LOCAL_DATA_DIR parameter ..."
 g_local_data_dir="${LOCAL_DATA_DIR}"
 if [[ "${g_local_data_dir}" == "" ]]; then
     g_local_data_dir="$( jq -r '.CONFIGURATION.LOCAL_DATA_DIR' ${PLAN_FILE} )"
@@ -356,7 +360,7 @@ log_msg "Readed LOCAL_DATA_DIR '${g_local_data_dir}'"
 # ------------------------------------------
 # Get RSYNC option
 # ------------------------------------------
-log_msg "Reading RECOVERY_RSYNC_OPTIONS parameter ..."
+# log_msg "Reading RECOVERY_RSYNC_OPTIONS parameter ..."
 g_recovery_rsync_options="${RECOVERY_RSYNC_OPTIONS}"
 if [[ "${g_recovery_rsync_options}" == "" ]]; then
     g_recovery_rsync_options="$( jq -r '.CONFIGURATION.RECOVERY_RSYNC_OPTIONS' ${PLAN_FILE} )"
@@ -372,11 +376,13 @@ if [[ "${g_mail_server}" == "" ]]; then
     g_mail_server="$( jq -r '.CONFIGURATION.MAIL_RELAY' ${PLAN_FILE} )"
 fi
 log_msg "Readed MAIL_RELAY: '${g_mail_server}'"
+
 g_mail_from="${MAIL_FROM}"
 if [[ "${g_mail_from}" == "" ]]; then
     g_mail_from="$( jq -r '.CONFIGURATION.MAIL_FROM' ${PLAN_FILE} )"
 fi
 log_msg "Readed MAIL_FROM: '${g_mail_from}'"
+
 g_mail_dest="${MAIL_DEST}"
 if [[ "${g_mail_dest}" == "" ]]; then
     g_mail_dest="$( jq -r '.CONFIGURATION.MAIL_DEST' ${PLAN_FILE} )"
@@ -409,7 +415,7 @@ for line in $list; do
         p_pvc_replica=$d
 
         log_msg " ------------------------------------------------"
-        log_msg " read_parameters ..."
+        log_msg " Processing PV  ..."
         log_msg " ------------------------------------------------"
         log_msg "p_namespace=$p_namespace"
         log_msg "p_pvc=$p_pvc"
