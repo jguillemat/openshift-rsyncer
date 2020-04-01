@@ -207,7 +207,7 @@ function recovery_pv_data() {
          log_msg "GlusterVol already mounted locally"
     else 
         log_msg "Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
-        if mount -t glusterfs ${p_mount_data} ${source_dir} -o ro > /dev/null; then
+        if mount -t glusterfs ${p_mount_data} ${source_dir} -o rw > /dev/null; then
             log_msg "GlusterVol mounted locally"
         else 
             error_msg "ERROR Mounting GlusterVol '${p_mount_data}' into '${source_dir}'. Exiting method"
