@@ -11,12 +11,12 @@
 #		    "NAMESPACE": "pvc-backuper",
 #		    "PVC": "data-pvc",
 #		    "PV": "pvc-0e48b67d-6a98-11ea-a00e-001a4a461c22",
-#		    "PVC_GLUSTER_MOUNT_DATA": "vol_4619cd02f4cf514517c6043e33008f3d",
+#		    "PV_GLUSTER_MOUNT_DATA": "vol_4619cd02f4cf514517c6043e33008f3d",
 #	    }, {
 #		    "NAMESPACE": "pvc-backuper",
 #		    "PVC": "data-pvc",
 #		    "PV": "pvc-0e48b67d-6a98-11ea-a00e-001a4a461c22",
-#		    "PVC_GLUSTER_MOUNT_DATA": "vol_4619cd02f4cf514517c6043e33008f3d",
+#		    "PV_GLUSTER_MOUNT_DATA": "vol_4619cd02f4cf514517c6043e33008f3d",
 #		    "PVC_REPLICA": "replica-pvc"
 #	    }
 #	    ], 
@@ -117,7 +117,7 @@ function recovery_pv_data() {
     log_msg "Entering into recovery_pv_data ${*} ..."
     local p_namespace="$1"
     local p_pvc="$2"
-    local p_mount_data="$3"
+    local p_gluster_mount_data="$3"
     local p_pvc_replica="$4"
  
     log_msg "Checking Namespace '${p_namespace}' ..."
@@ -201,16 +201,16 @@ function recovery_pv_data() {
         mkdir -p "${source_dir}"
     fi
 
-    gluster_mount_dir=${p_mount_data%/}
+    gluster_mount_dir=${p_gluster_mount_data%/}
     log_msg "Check local mount point into ${gluster_mount_dir}."
     if mount | grep ${gluster_mount_dir} > /dev/null; then
          log_msg "GlusterVol already mounted locally"
     else 
-        log_msg "Mounting GlusterVol '${p_mount_data}' into '${source_dir}' "
-        if mount -t glusterfs ${p_mount_data} ${source_dir} -o rw > /dev/null; then
+        log_msg "Mounting GlusterVol '${p_gluster_mount_data}' into '${source_dir}' "
+        if mount -t glusterfs ${p_gluster_mount_data} ${source_dir} -o rw > /dev/null; then
             log_msg "GlusterVol mounted locally"
         else 
-            error_msg "ERROR Mounting GlusterVol '${p_mount_data}' into '${source_dir}'. Exiting method"
+            error_msg "ERROR Mounting GlusterVol '${p_gluster_mount_data}' into '${source_dir}'. Exiting method"
             return "${E_CANNOT_MOUNT_GLUSTER}"
         fi
     fi
@@ -395,7 +395,7 @@ log_msg "Readed MAIL_DEST: '${g_mail_dest}'"
 # ------------------------------------------
 log_msg "Starting processing recovery plan file ..."
 
-list=$(cat "$PLAN_FILE" | jq -r '.RECOVERY_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.PVC_GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"')
+list=$(cat "$PLAN_FILE" | jq -r '.RECOVERY_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.PV_GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"')
 
 ORIG_IFS=$IFS        # Save the original IFS
 LINE_IFS=$'\n'$'\r'  # For splitting input into lines
@@ -411,7 +411,7 @@ for line in $list; do
     do
         p_namespace=$a
         p_pvc=$b
-        p_mount_data=$c
+        p_gluster_mount_data=$c
         p_pvc_replica=$d
 
         log_msg " ------------------------------------------------"
@@ -419,15 +419,15 @@ for line in $list; do
         log_msg " ------------------------------------------------"
         log_msg "p_namespace=$p_namespace"
         log_msg "p_pvc=$p_pvc"
-        log_msg "p_mount_data=$p_mount_data"
+        log_msg "p_gluster_mount_data=$p_gluster_mount_data"
         log_msg "p_pvc_replica=$p_pvc_replica"
 
         # ------------------------------------------
         # Process plan entry
         # ------------------------------------------.
-        if [ -n "$p_namespace" ] && [ -n "$p_pvc" ] && [ -n "$p_mount_data" ] && [ -n "$p_pvc_replica" ]; then
+        if [ -n "$p_namespace" ] && [ -n "$p_pvc" ] && [ -n "$p_gluster_mount_data" ] && [ -n "$p_pvc_replica" ]; then
             log_msg "Calling recovery_pv_data method"
-            recovery_pv_data ${p_namespace} ${p_pvc} ${p_mount_data} ${p_pvc_replica}
+            recovery_pv_data ${p_namespace} ${p_pvc} ${p_gluster_mount_data} ${p_pvc_replica}
             if [ $? == 0 ]; then
                 log_msg "recovery_pv_data exists ok"
             else

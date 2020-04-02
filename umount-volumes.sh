@@ -11,13 +11,13 @@
 #		    "NAMESPACE": "pvc-backuper",
 #		    "PVC": "data-pvc",
 #		    "PV": "pvc-0e48b67d-6a98-11ea-a00e-001a4a461c22",
-#		    "PVC_GLUSTER_MOUNT_DATA": "vol_4619cd02f4cf514517c6043e33008f3d",
+#		    "PV_GLUSTER_MOUNT_DATA": "vol_4619cd02f4cf514517c6043e33008f3d",
 #		    "PVC_REPLICA": "replica-pvc"
 #	    }, {
 #		    "NAMESPACE": "pvc-backuper",
 #		    "PVC": "data-pvc",
 #		    "PV": "pvc-0e48b67d-6a98-11ea-a00e-001a4a461c22",
-#		    "PVC_GLUSTER_MOUNT_DATA": "vol_4619cd02f4cf514517c6043e33008f3d",
+#		    "PV_GLUSTER_MOUNT_DATA": "vol_4619cd02f4cf514517c6043e33008f3d",
 #		    "PVC_REPLICA": "replica-pvc"
 #	    }
  
@@ -269,7 +269,7 @@ log_msg "Readed BACKUP_RSYNC_OPTIONS '${g_BACKUP_RSYNC_OPTIONS}'"
 # ------------------------------------------
 log_msg "Starting umount volumes from sync plan file ..."
 
-list=$(cat "$PLAN_FILE" | jq -r '.REPLICA_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.PVC_GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"')
+list=$(cat "$PLAN_FILE" | jq -r '.REPLICA_VOLUMES[]|"\(.NAMESPACE) \(.PVC) \(.PV_GLUSTER_MOUNT_DATA) \(.PVC_REPLICA)"')
 
 ORIG_IFS=$IFS        # Save the original IFS
 LINE_IFS=$'\n'$'\r'  # For splitting input into lines
